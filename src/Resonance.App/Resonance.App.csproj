@@ -18,5 +18,7 @@
   <ItemGroup>
     <Using Remove="System.Windows.Forms" />
     <ProjectReference Include="..\Resonance.Core\Resonance.Core.csproj" />
+    <!-- Window icon: the taskbar shows it directly instead of Windows' cached copy of the exe icon. -->
+    <Resource Include="..\..\assets\resonance.ico" Link="resonance.ico" />
   </ItemGroup>
 </Project>
