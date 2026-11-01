@@ -495,9 +495,11 @@ public sealed class MainViewModel : ObservableObject
     public HeadphoneForm DeviceForm { get => _deviceForm; private set => SetField(ref _deviceForm, value); }
     public ModelColor DeviceColor { get => _deviceColor; private set => SetField(ref _deviceColor, value); }
 
+    private bool _documentation; // documentation screenshots never show the user's own picture
+
     public string? DevicePicture
     {
-        get => _settings.DevicePicture;
+        get => _documentation ? null : _settings.DevicePicture;
         private set { _settings.DevicePicture = value; _settings.Save(); Raise(); Raise(nameof(HasDevicePicture)); }
     }
     public bool HasDevicePicture => !string.IsNullOrEmpty(DevicePicture);
@@ -837,12 +839,14 @@ public sealed class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Swaps the user's own now-playing title and device names for neutral samples while
+    /// Swaps the user's own now-playing title, device names and picture for neutral samples while
     /// documentation screenshots are rendered; disposing restores them.
     /// </summary>
     internal IDisposable DocumentationPreview()
     {
         var (title, artist, devices) = (TrackTitle, TrackArtist, PairedDevices);
+        _documentation = true;
+        Raise(nameof(DevicePicture));
         TrackTitle = "Midnight Drive";
         TrackArtist = "Sample Artist — Night Sessions";
         PairedDevices =
@@ -851,7 +855,12 @@ public sealed class MainViewModel : ObservableObject
             new(this, "Phone", "00:11:22:33:44:02", connected: true, playing: false),
             new(this, "Tablet", "00:11:22:33:44:03", connected: false, playing: false),
         ];
-        return new Restore(() => { TrackTitle = title; TrackArtist = artist; PairedDevices = devices; });
+        return new Restore(() =>
+        {
+            TrackTitle = title; TrackArtist = artist; PairedDevices = devices;
+            _documentation = false;
+            Raise(nameof(DevicePicture));
+        });
     }
 
     private sealed class Restore(Action undo) : IDisposable
