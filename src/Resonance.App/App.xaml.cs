@@ -41,6 +41,9 @@ public partial class App : Application
     {
         if (args.FirstOrDefault() == "__show") { await Dispatcher.InvokeAsync(ShowWindow); return CommandResult.Done("ok"); }
         if (args.FirstOrDefault() == "__ping") return CommandResult.Done("pong");
+        // Documentation screenshots, rendered off-screen: resonance-cli __screenshot <folder>
+        if (args.FirstOrDefault() == "__screenshot")
+            return CommandResult.Done(await Dispatcher.InvokeAsync(() => _window!.RenderPages(args.ElementAtOrDefault(1) ?? ".")));
         if (_vm?.Device is not { } hp) return CommandResult.Waiting(T("cli.notconnected", _vm?.Status));
         return await CommandRunner.RunAsync(hp, args);
     }

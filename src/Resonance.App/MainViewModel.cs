@@ -586,6 +586,29 @@ public sealed class MainViewModel : ObservableObject
         return Send(hp => hp.SendDeviceActionAsync(action, row.Address));
     }
 
+    /// <summary>
+    /// Swaps the user's own now-playing title and device names for neutral samples while
+    /// documentation screenshots are rendered; disposing restores them.
+    /// </summary>
+    internal IDisposable DocumentationPreview()
+    {
+        var (title, artist, devices) = (TrackTitle, TrackArtist, PairedDevices);
+        TrackTitle = "Midnight Drive";
+        TrackArtist = "Sample Artist — Night Sessions";
+        PairedDevices =
+        [
+            new(this, "Laptop", "00:11:22:33:44:01", connected: true, playing: true),
+            new(this, "Phone", "00:11:22:33:44:02", connected: true, playing: false),
+            new(this, "Tablet", "00:11:22:33:44:03", connected: false, playing: false),
+        ];
+        return new Restore(() => { TrackTitle = title; TrackArtist = artist; PairedDevices = devices; });
+    }
+
+    private sealed class Restore(Action undo) : IDisposable
+    {
+        public void Dispose() => undo();
+    }
+
     internal Task SwitchSourceAsync(PairedDeviceRow row) => Send(hp => hp.SwitchAudioSourceAsync(row.Address));
 }
 

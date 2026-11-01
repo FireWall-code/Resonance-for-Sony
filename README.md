@@ -24,6 +24,14 @@ command line.
 - **Windows-only extras**: notification area icon (click to cycle noise modes), global keyboard shortcuts,
   start with Windows, a scriptable command line, light / dark theme, English and French
 
+## Screenshots
+
+| Equalizer | Touch controls | Devices |
+|---|---|---|
+| ![Equalizer](docs/images/equalizer.png) | ![Touch controls](docs/images/touch.png) | ![Devices](docs/images/devices.png) |
+| **Audio quality** | **Settings** | **Keyboard shortcuts** |
+| ![Audio quality](docs/images/quality.png) | ![Settings](docs/images/settings.png) | ![Keyboard shortcuts](docs/images/shortcuts.png) |
+
 ## Supported headphones
 
 | Model | Status |
