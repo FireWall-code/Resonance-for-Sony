@@ -1,0 +1,449 @@
+<Window x:Class="Resonance.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Resonance.App"
+        Title="Resonance" Width="1040" Height="760" MinWidth="820" MinHeight="560"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ============================== Side bar -->
+        <DockPanel Grid.Column="0" Margin="16,16,8,16">
+            <Border DockPanel.Dock="Top" Style="{StaticResource Card}" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="{Binding DeviceName}" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Firmware}" Style="{StaticResource Caption}" Margin="0,2,0,12" />
+                    <UniformGrid Columns="3" Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="{local:L side.left}" Style="{StaticResource Caption}" HorizontalAlignment="Center" />
+                            <TextBlock FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center">
+                                <Run Text="{Binding BatteryLeft.Level, Mode=OneWay}" /><Run Text="%" />
+                            </TextBlock>
+                            <TextBlock Text="{local:L battery.charging}" Style="{StaticResource Caption}" HorizontalAlignment="Center"
+                                       Visibility="{Binding BatteryLeft.IsCharging, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="{local:L side.right}" Style="{StaticResource Caption}" HorizontalAlignment="Center" />
+                            <TextBlock FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center">
+                                <Run Text="{Binding BatteryRight.Level, Mode=OneWay}" /><Run Text="%" />
+                            </TextBlock>
+                            <TextBlock Text="{local:L battery.charging}" Style="{StaticResource Caption}" HorizontalAlignment="Center"
+                                       Visibility="{Binding BatteryRight.IsCharging, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="{local:L side.case}" Style="{StaticResource Caption}" HorizontalAlignment="Center" />
+                            <TextBlock FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center">
+                                <Run Text="{Binding BatteryCase.Level, Mode=OneWay}" /><Run Text="%" />
+                            </TextBlock>
+                            <TextBlock Text="{local:L battery.charging}" Style="{StaticResource Caption}" HorizontalAlignment="Center"
+                                       Visibility="{Binding BatteryCase.IsCharging, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </UniformGrid>
+                    <Border HorizontalAlignment="Left" Margin="0,12,0,0" Padding="8,2" CornerRadius="4"
+                            BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding Codec}" FontSize="12" FontWeight="SemiBold" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <StackPanel DockPanel.Dock="Bottom">
+                <TextBlock Text="{Binding Status}" Style="{StaticResource Caption}" Margin="4,0,4,8" />
+                <Button Content="{local:L power.off}" Command="{Binding PowerOffCommand}" HorizontalAlignment="Stretch"
+                        IsEnabled="{Binding IsConnected}" />
+            </StackPanel>
+
+            <ListBox x:Name="Nav" SelectedIndex="0" BorderThickness="0" Background="Transparent" Margin="0,4"
+                     SelectionChanged="Nav_SelectionChanged">
+                <ListBoxItem Content="{local:L nav.sound}" Padding="12,10" />
+                <ListBoxItem Content="{local:L nav.eq}" Padding="12,10" />
+                <ListBoxItem Content="{local:L nav.quality}" Padding="12,10" />
+                <ListBoxItem Content="{local:L nav.touch}" Padding="12,10" />
+                <ListBoxItem Content="{local:L nav.settings}" Padding="12,10" />
+                <ListBoxItem Content="{local:L nav.devices}" Padding="12,10" />
+                <ListBoxItem Content="{local:L nav.hotkeys}" Padding="12,10" />
+            </ListBox>
+        </DockPanel>
+
+        <!-- ============================== Pages -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="16,16,24,16"
+                      IsEnabled="{Binding IsConnected}">
+            <Grid>
+                <!-- Sound and noise -->
+                <StackPanel x:Name="PageSound">
+                    <TextBlock Text="{local:L sound.title}" Style="{StaticResource PageTitle}" />
+
+                    <Border Style="{StaticResource Card}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="⏮" Command="{Binding PreviousCommand}" Width="44" Margin="4,0" ToolTip="{local:L media.prev}" />
+                                <Button Content="⏯" Command="{Binding PlayPauseCommand}" Width="52" Margin="4,0" ToolTip="{local:L media.playpause}" />
+                                <Button Content="⏭" Command="{Binding NextCommand}" Width="44" Margin="4,0" ToolTip="{local:L media.next}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="{Binding TrackTitle}" Style="{StaticResource CardTitle}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding TrackArtist}" Style="{StaticResource Caption}" TextTrimming="CharacterEllipsis" />
+                                <DockPanel Margin="0,12,16,0">
+                                    <TextBlock Text="{local:L media.volume}" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <TextBlock Text="{Binding Volume}" DockPanel.Dock="Right" VerticalAlignment="Center" Width="28" TextAlignment="Right" />
+                                    <Slider Minimum="0" Maximum="{Binding VolumeMax}" Value="{Binding Volume}" IsSnapToTickEnabled="True"
+                                            TickFrequency="1" VerticalAlignment="Center" />
+                                </DockPanel>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L nc.title}" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="{local:L nc.caption}" Style="{StaticResource Caption}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                <RadioButton Content="{local:L nc.nc}" Margin="0,0,24,0" GroupName="nc"
+                                             IsChecked="{Binding NcMode, Converter={x:Static local:IndexConverter.Instance}, ConverterParameter=0}" />
+                                <RadioButton Content="{local:L nc.ambient}" Margin="0,0,24,0" GroupName="nc"
+                                             IsChecked="{Binding NcMode, Converter={x:Static local:IndexConverter.Instance}, ConverterParameter=1}" />
+                                <RadioButton Content="{local:L nc.off}" GroupName="nc"
+                                             IsChecked="{Binding NcMode, Converter={x:Static local:IndexConverter.Instance}, ConverterParameter=2}" />
+                            </StackPanel>
+                            <StackPanel Visibility="{Binding IsAmbient, Converter={StaticResource BoolToVisibility}}" Margin="0,16,0,0">
+                                <DockPanel>
+                                    <TextBlock Text="{local:L nc.level}" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <TextBlock Text="{Binding AmbientLevel}" DockPanel.Dock="Right" Width="28" TextAlignment="Right" VerticalAlignment="Center" />
+                                    <Slider Minimum="1" Maximum="20" Value="{Binding AmbientLevel}" IsSnapToTickEnabled="True" TickFrequency="1"
+                                            IsEnabled="{Binding IsManualAmbient}" />
+                                </DockPanel>
+                                <CheckBox Content="{local:L nc.voice}" IsChecked="{Binding VoiceFocus}" Margin="0,12,0,0" />
+                                <DockPanel Margin="0,12,0,0">
+                                    <ComboBox DockPanel.Dock="Right" Width="200" ItemsSource="{Binding AutoAmbientSensitivities}"
+                                              SelectedItem="{Binding SelectedAutoAmbientSensitivity}" IsEnabled="{Binding AutoAmbient}" />
+                                    <CheckBox IsChecked="{Binding AutoAmbient}" VerticalAlignment="Center">
+                                        <TextBlock Text="{local:L nc.auto}" TextWrapping="Wrap" />
+                                    </CheckBox>
+                                </DockPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel>
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding SpeakToChat}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L stc.title}" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="{local:L stc.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <Grid Margin="0,12,0,0" Visibility="{Binding SpeakToChat, Converter={StaticResource BoolToVisibility}}">
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="16" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{local:L stc.sensitivity}" Style="{StaticResource Caption}" Margin="0,0,0,4" />
+                                    <ComboBox ItemsSource="{Binding Sensitivities}" SelectedItem="{Binding SelectedSensitivity}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{local:L stc.timeout}" Style="{StaticResource Caption}" Margin="0,0,0,4" />
+                                    <ComboBox ItemsSource="{Binding ModeOutTimes}" SelectedItem="{Binding SelectedModeOutTime}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Equalizer -->
+                <StackPanel x:Name="PageEq" Visibility="Collapsed">
+                    <TextBlock Text="{local:L eq.title}" Style="{StaticResource PageTitle}" />
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel>
+                                <ComboBox DockPanel.Dock="Right" Width="240" ItemsSource="{Binding EqPresets}" SelectedItem="{Binding SelectedEqPreset}" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L eq.preset}" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="{local:L eq.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding Bands}" Margin="0,24,0,0">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock HorizontalAlignment="Center" FontSize="12" Margin="0,0,0,6">
+                                                <Run Text="{Binding Value, Mode=OneWay, StringFormat={}{0:+0;−0;0}}" />
+                                            </TextBlock>
+                                            <Slider Orientation="Vertical" Height="220" Minimum="-6" Maximum="6" HorizontalAlignment="Center"
+                                                    Value="{Binding Value}" IsSnapToTickEnabled="True" TickFrequency="1" />
+                                            <TextBlock Text="{Binding Label}" Style="{StaticResource Caption}" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="{local:L eq.legend}" Style="{StaticResource Caption}" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Sound quality -->
+                <StackPanel x:Name="PageQuality" Visibility="Collapsed">
+                    <TextBlock Text="{local:L quality.title}" Style="{StaticResource PageTitle}" />
+                    <Border Style="{StaticResource Card}">
+                        <DockPanel>
+                            <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Dsee}" VerticalAlignment="Center" />
+                            <StackPanel>
+                                <TextBlock Text="{local:L quality.dsee}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{local:L quality.dsee.caption}" Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L quality.connection}" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="{local:L quality.connection.caption}" Style="{StaticResource Caption}" />
+                            <ComboBox ItemsSource="{Binding Priorities}" SelectedItem="{Binding SelectedPriority}" Margin="0,12,0,0" HorizontalAlignment="Left" Width="320" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel>
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Bgm}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L quality.bgm}" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="{local:L quality.bgm.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <ComboBox ItemsSource="{Binding RoomSizes}" SelectedItem="{Binding SelectedRoomSize}" Margin="0,12,0,0" HorizontalAlignment="Left" Width="320"
+                                      Visibility="{Binding Bgm, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Touch -->
+                <StackPanel x:Name="PageTouch" Visibility="Collapsed">
+                    <TextBlock Text="{local:L touch.title}" Style="{StaticResource PageTitle}" />
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L touch.left}" Style="{StaticResource CardTitle}" />
+                            <ComboBox ItemsSource="{Binding TouchLeftOptions}" SelectedItem="{Binding SelectedTouchLeft}" Margin="0,8,0,0" HorizontalAlignment="Left" Width="320" />
+                            <ItemsControl ItemsSource="{Binding LeftGestures}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Style="{StaticResource Row}">
+                                            <ComboBox DockPanel.Dock="Right" Width="360" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" />
+                                            <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L touch.right}" Style="{StaticResource CardTitle}" />
+                            <ComboBox ItemsSource="{Binding TouchRightOptions}" SelectedItem="{Binding SelectedTouchRight}" Margin="0,8,0,0" HorizontalAlignment="Left" Width="320" />
+                            <ItemsControl ItemsSource="{Binding RightGestures}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Style="{StaticResource Row}">
+                                            <ComboBox DockPanel.Dock="Right" Width="360" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" />
+                                            <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Visibility="{Binding HasQuickAccess, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L qa.title}" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="{local:L qa.caption}" Style="{StaticResource Caption}" />
+                            <DockPanel Style="{StaticResource Row}">
+                                <ComboBox DockPanel.Dock="Right" Width="320" ItemsSource="{x:Static local:MainViewModel.QuickAccessOptions}" SelectedItem="{Binding SelectedQuickAccess1}" />
+                                <TextBlock Text="{local:L qa.one}" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <ComboBox DockPanel.Dock="Right" Width="320" ItemsSource="{x:Static local:MainViewModel.QuickAccessOptions}" SelectedItem="{Binding SelectedQuickAccess2}" />
+                                <TextBlock Text="{local:L qa.two}" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <DockPanel>
+                            <CheckBox DockPanel.Dock="Right" IsChecked="{Binding HeadGestures}" VerticalAlignment="Center" />
+                            <StackPanel>
+                                <TextBlock Text="{local:L head.title}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{local:L head.caption}" Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Settings -->
+                <StackPanel x:Name="PageSettings" Visibility="Collapsed">
+                    <TextBlock Text="{local:L settings.title}" Style="{StaticResource PageTitle}" />
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Multipoint}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L settings.multipoint}" />
+                                    <TextBlock Text="{local:L settings.multipoint.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding OneSideNc}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L settings.onesided}" />
+                                    <TextBlock Text="{local:L settings.onesided.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Sidetone}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L settings.sidetone}" />
+                                    <TextBlock Text="{local:L settings.sidetone.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding VoiceGuidance}" VerticalAlignment="Center" />
+                                <TextBlock Text="{local:L settings.guidance}" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding VoiceGuidance, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding VoiceGuidanceVolume, StringFormat={}{0:+0;−0;0}}" Width="28" TextAlignment="Right" VerticalAlignment="Center" />
+                                <Slider DockPanel.Dock="Right" Width="240" Minimum="-2" Maximum="2" Value="{Binding VoiceGuidanceVolume}"
+                                        IsSnapToTickEnabled="True" TickFrequency="1" Margin="12,0" />
+                                <TextBlock Text="{local:L settings.guidance.volume}" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <ComboBox DockPanel.Dock="Right" Width="360" ItemsSource="{Binding VoiceAssistantOptions}" SelectedItem="{Binding SelectedVoiceAssistant}" />
+                                <TextBlock Text="{local:L settings.assistant}" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <ComboBox DockPanel.Dock="Right" Width="360" ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L settings.language}" />
+                                    <TextBlock Text="{local:L settings.language.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Command="{Binding FitTestCommand}" VerticalAlignment="Center" MinWidth="150">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Content" Value="{local:L fit.start}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsFitTestRunning}" Value="True">
+                                                <Setter Property="Content" Value="{local:L fit.stop}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <StackPanel>
+                                <TextBlock Text="{local:L fit.title}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{Binding FitTestText}" Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L battery.title}" Style="{StaticResource CardTitle}" />
+                            <DockPanel Style="{StaticResource Row}">
+                                <ComboBox DockPanel.Dock="Right" Width="300" ItemsSource="{Binding AutoPowerOffOptions}" SelectedItem="{Binding SelectedAutoPowerOff}" />
+                                <TextBlock Text="{local:L battery.autooff}" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding CaringCharge}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L battery.caring}" />
+                                    <TextBlock Text="{Binding CaringChargeLabel}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Devices -->
+                <StackPanel x:Name="PageDevices" Visibility="Collapsed">
+                    <TextBlock Text="{local:L devices.title}" Style="{StaticResource PageTitle}" />
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="{local:L devices.add}" Command="{Binding PairingModeCommand}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L devices.list}" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="{local:L devices.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding PairedDevices}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Style="{StaticResource Row}">
+                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="{local:L devices.playfrom}" Command="{Binding PlayFromCommand}" Margin="4,0"
+                                                        Visibility="{Binding CanPlayFrom, Converter={StaticResource BoolToVisibility}}" />
+                                                <Button Content="{Binding ConnectLabel}" Command="{Binding ConnectCommand}" Margin="4,0" MinWidth="110" />
+                                                <Button Content="{local:L devices.forget}" Command="{Binding ForgetCommand}" Margin="4,0" />
+                                            </StackPanel>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" />
+                                                <TextBlock Style="{StaticResource Caption}">
+                                                    <Run Text="{Binding State, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Address, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <!-- Hotkeys -->
+                <StackPanel x:Name="PageHotkeys" Visibility="Collapsed">
+                    <TextBlock Text="{local:L hotkeys.title}" Style="{StaticResource PageTitle}" />
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L hotkeys.card}" Style="{StaticResource CardTitle}" />
+                            <TextBlock Style="{StaticResource Caption}"
+                                       Text="{local:L hotkeys.caption}" />
+                            <ItemsControl ItemsSource="{Binding Hotkeys.Rows}" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Style="{StaticResource Row}">
+                                            <Button DockPanel.Dock="Right" Content="{local:L hotkeys.clear}" Command="{Binding ClearCommand}" Margin="8,0,0,0" VerticalAlignment="Top" />
+                                            <StackPanel DockPanel.Dock="Right" Width="300">
+                                                <TextBox Text="{Binding Display, Mode=OneWay}" IsReadOnly="True" Cursor="Hand" IsReadOnlyCaretVisible="False"
+                                                         TextAlignment="Center" Tag="{Binding}"
+                                                         GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
+                                                         PreviewKeyDown="HotkeyBox_PreviewKeyDown" />
+                                                <TextBlock Text="{Binding Status}" FontSize="12" TextWrapping="Wrap" Margin="2,4,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,16,0">
+                                                <TextBlock Text="{Binding Label}" />
+                                                <TextBlock Text="{Binding Description}" Style="{StaticResource Caption}" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>

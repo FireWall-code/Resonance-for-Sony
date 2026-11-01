@@ -1,0 +1,26 @@
+name: New headphones
+description: Help add support for your Sony headphones
+labels: [new headphones]
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      placeholder: WH-1000XM5
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware version (shown in Sound Connect)
+  - type: textarea
+    id: scan
+    attributes:
+      label: Scan output
+      description: Quit Resonance, then run `resonance-cli deepscan > scan.txt` with the headphones connected, and attach scan.txt. The scan only reads settings.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: What works, what doesn't

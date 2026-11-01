@@ -1,0 +1,8 @@
+<Project>
+  <!-- Win32 cannot start executables from very long paths: when the checkout lives in such a
+       folder, build into %LOCALAPPDATA%\Resonance\build instead of the usual bin/obj. -->
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Length) &gt; 150">
+    <BaseOutputPath>$(LOCALAPPDATA)\Resonance\build\$(MSBuildProjectName)\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(LOCALAPPDATA)\Resonance\build\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>

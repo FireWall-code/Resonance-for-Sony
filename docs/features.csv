@@ -1,0 +1,50 @@
+feature,area,priority,original,clone,notes
+Automatic connection to the paired headphones,connection,must,yes,yes,Uses Windows 11 association entries; remembers the last device
+Automatic reconnection,connection,must,yes,yes,Every 5 s; needed after a connection priority change
+Battery left / right / case,status,must,yes,yes,
+Codec indicator,status,should,yes,yes,LDAC / AAC / SBC / LC3
+Firmware version,status,could,yes,yes,
+Noise cancelling / ambient sound / off,sound,must,yes,yes,Tested on WF-1000XM6
+Ambient sound level (1-20),sound,must,yes,yes,Tested
+Focus on voice,sound,must,yes,yes,Tested
+Auto ambient sound (adaptive level),sound,should,yes,yes,"Tested; bytes 7-8 of 68 19, ambient mode only"
+Adaptive sound control (activity / place),sound,skip,yes,skip,Driven by the phone's sensors (Sense 0x70)
+Speak-to-chat on/off,sound,must,yes,yes,Tested
+Speak-to-chat sensitivity and timeout,sound,should,yes,yes,Tested
+10-band equalizer,equalizer,must,yes,yes,Tested; switches to Custom when edited
+Equalizer presets,equalizer,must,yes,yes,Tested
+Equalizer user settings 1 / 2,equalizer,could,yes,yes,Select and edit bands
+DSEE Extreme,quality,must,yes,yes,Tested
+Sound quality / stable connection priority,quality,should,yes,yes,Tested; sound drops briefly
+Background music and room size,quality,could,yes,yes,Tested
+LE Audio / Classic mode,quality,skip,yes,skip,Switching drops the Classic control link; Windows needs LE Audio hardware
+Left / right touch presets,touch,must,yes,yes,Tested
+Gesture customization,touch,should,yes,yes,Tested (NC/ambient cycle)
+Head gestures,touch,should,yes,yes,Tested
+Quick access (Spotify Tap),touch,could,yes,yes,Tested
+Voice assistant choice,touch,could,yes,yes,Tested with the phone assistant; Sony's assistant must be set up on the phone
+Multipoint,settings,should,yes,yes,Read and written; not round-trip tested to avoid disconnecting a device
+One-earbud noise control,settings,could,yes,yes,Tested
+Sidetone during calls,settings,could,yes,yes,Tested
+Voice guidance on/off,settings,could,yes,yes,Tested
+Voice guidance volume,settings,could,yes,yes,Tested; the language needs a download from Sony's servers
+Automatic power off,settings,should,yes,yes,Tested
+Battery care (80 %),settings,should,yes,yes,Tested
+Turn off headphones,settings,could,yes,yes,Not tested (would turn them off)
+Now playing,playback,should,yes,yes,
+Play / pause / next / previous,playback,should,yes,yes,Not tested end to end
+Volume,playback,should,yes,yes,Tested
+Remembered devices,devices,could,yes,yes,Connected / playing state per device
+Connect / disconnect / forget a device,devices,could,yes,yes,Command verified (answer from the headphones); Forget not tested
+Switch audio source,devices,could,yes,yes,Implemented; not tested
+Pairing mode,devices,could,yes,yes,Implemented; not tested
+Safe listening (sound dose),health,could,yes,partial,"Logs decoded; the WHO dose formula was not recovered, nothing is shown"
+Earbud fit test,ear tips,could,yes,yes,Tested: both earbuds sealed
+360 audio / head tracking,spatial,skip,yes,skip,Sensor data for the phone's spatial renderer
+Notification area icon + quick noise toggle,windows,should,no,yes,Windows-specific
+Global keyboard shortcuts,windows,should,no,yes,Windows-specific
+Command line + scripting,windows,should,no,yes,Windows-specific
+Light / dark Fluent theme,windows,should,no,yes,Follows Windows 11
+English / French UI,windows,should,no,yes,Community translations welcome
+Firmware update,firmware,skip,yes,skip,Files come from Sony's servers
+Sony account / Discover / Scene,cloud,skip,yes,skip,Sony online services

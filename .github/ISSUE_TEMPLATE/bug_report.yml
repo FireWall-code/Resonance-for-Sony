@@ -1,0 +1,21 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Headphones model and firmware
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what happened instead. `resonance-cli json` output helps.
+    validations:
+      required: true
