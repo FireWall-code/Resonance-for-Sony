@@ -34,6 +34,9 @@ public sealed class MdrConnection : IAsyncDisposable
     private readonly CancellationTokenSource _cts = new();
     private Stream? _in, _out;
     private Task? _readLoop;
+    // Kept so that closing really frees the headphones' control channel for other apps (Sound Connect).
+    private BluetoothDevice? _device;
+    private RfcommDeviceService? _service;
     private byte _txSeq;
     private TaskCompletionSource? _pendingAck;
 
@@ -96,7 +99,7 @@ public sealed class MdrConnection : IAsyncDisposable
 
     private async Task OpenAsync(CancellationToken ct)
     {
-        var device = await BluetoothDevice.FromBluetoothAddressAsync(Address)
+        var device = _device = await BluetoothDevice.FromBluetoothAddressAsync(Address)
                      ?? throw new InvalidOperationException(Loc.T("err.btnotfound"));
         DeviceName = device.Name;
         RfcommDeviceService? service = null;
@@ -106,7 +109,8 @@ public sealed class MdrConnection : IAsyncDisposable
             var id = RfcommServiceId.FromUuid(uuid);
             var r = await device.GetRfcommServicesForIdAsync(id, BluetoothCacheMode.Cached);
             if (r.Services.Count == 0) r = await device.GetRfcommServicesForIdAsync(id, BluetoothCacheMode.Uncached);
-            if (r.Services.Count > 0) { service = r.Services[0]; IsV2 = v2; break; }
+            foreach (var extra in r.Services.Skip(1)) extra.Dispose();
+            if (r.Services.Count > 0) { service = _service = r.Services[0]; IsV2 = v2; break; }
         }
         if (service is null)
             throw new InvalidOperationException(Loc.T("err.nomdr"));
@@ -206,7 +210,12 @@ public sealed class MdrConnection : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _cts.Cancel();
+        _in?.Dispose();
+        _out?.Dispose();
         _socket.Dispose();
         if (_readLoop != null) { try { await _readLoop; } catch { } }
+        // Without these, Windows keeps the RFCOMM service open and the phone app cannot connect.
+        _service?.Dispose();
+        _device?.Dispose();
     }
 }
