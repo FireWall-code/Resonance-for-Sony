@@ -196,6 +196,7 @@ public sealed class MainViewModel : ObservableObject
     public async Task ConnectLoopAsync()
     {
         if (Interlocked.Exchange(ref _connecting, 1) == 1) return;
+        int attempt = 0;
         try
         {
             while (!_closing && _hp is null && !_paused && !_idle)
@@ -209,8 +210,10 @@ public sealed class MainViewModel : ObservableObject
                         Status = T("status.connecting");
                         try { hp = await Headphones.ConnectAsync(last); } catch (Exception) { hp = null; }
                     }
-                    var found = hp is null ? await MdrConnection.FindPairedAsync() : [];
-                    if (hp is null && found.Count == 0) { Status = T("status.nopaired"); }
+                    // Listing every paired device is the costly part: only now and then once a device is known.
+                    bool discover = hp is null && (DeviceMemory.Last is null || attempt % 4 == 3);
+                    var found = discover ? await MdrConnection.FindPairedAsync() : [];
+                    if (hp is null && found.Count == 0) { Status = DeviceMemory.Last is null ? T("status.nopaired") : T("status.waiting"); }
                     else
                     {
                         if (hp is null)
@@ -233,7 +236,11 @@ public sealed class MainViewModel : ObservableObject
                 {
                     Status = T("status.retry", ex.Message.Split('\n')[0].Trim());
                 }
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                // Off or out of range: Windows tells us when they connect. Otherwise retry less and less often
+                // (5, 10, 20, 40 s, then every minute), e.g. while the phone app holds the control channel.
+                var backoff = TimeSpan.FromSeconds(Math.Min(60, 5 << Math.Min(attempt++, 4)));
+                if (DeviceMemory.Last is { } address) await MdrConnection.WaitForDeviceAsync(address, backoff);
+                else await Task.Delay(backoff);
             }
         }
         finally { Interlocked.Exchange(ref _connecting, 0); }

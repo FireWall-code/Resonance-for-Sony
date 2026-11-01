@@ -90,6 +90,29 @@ public sealed class MdrConnection : IAsyncDisposable
         return result;
     }
 
+    /// <summary>
+    /// Waits until the headphones connect to this PC (Windows notifies it), or <paramref name="timeout"/>.
+    /// Costs nothing while waiting, unlike retrying a connection.
+    /// </summary>
+    public static async Task WaitForDeviceAsync(ulong address, TimeSpan timeout, CancellationToken ct = default)
+    {
+        BluetoothDevice? device = null;
+        try { device = await BluetoothDevice.FromBluetoothAddressAsync(address); }
+        catch (Exception) { /* not paired any more: plain wait */ }
+        if (device is null) { await Task.Delay(timeout, ct); return; }
+        using (device)
+        {
+            var connected = new TaskCompletionSource();
+            void OnChanged(BluetoothDevice d, object _)
+            {
+                if (d.ConnectionStatus == BluetoothConnectionStatus.Connected) connected.TrySetResult();
+            }
+            device.ConnectionStatusChanged += OnChanged;
+            try { await Task.WhenAny(connected.Task, Task.Delay(timeout, ct)); }
+            finally { device.ConnectionStatusChanged -= OnChanged; }
+        }
+    }
+
     public static async Task<MdrConnection> ConnectAsync(ulong address, CancellationToken ct = default)
     {
         var conn = new MdrConnection(address);

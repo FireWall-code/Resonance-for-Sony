@@ -351,5 +351,6 @@
  "appearance.animation": "Animation de connexion",
  "appearance.animation.caption": "Un dossier d'images PNG numérotées, jouées une fois à l'apparition de la carte.",
  "appearance.animation.choose": "Choisir un dossier…",
- "appearance.animation.none": "Sans animation"
+ "appearance.animation.none": "Sans animation",
+ "status.waiting": "En attente de votre casque…"
 }

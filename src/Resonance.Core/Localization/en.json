@@ -351,5 +351,6 @@
  "appearance.animation": "Connection animation",
  "appearance.animation.caption": "A folder of numbered PNG images, played once when the card appears.",
  "appearance.animation.choose": "Choose a folder…",
- "appearance.animation.none": "No animation"
+ "appearance.animation.none": "No animation",
+ "status.waiting": "Waiting for your headphones…"
 }

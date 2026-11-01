@@ -31,6 +31,9 @@ public partial class App : Application
         _vm.DeviceStateChanged += UpdateTray;
         _vm.Connected += () => { if (!_vm.TakeQuietConnect() && _vm.ShowConnectionCard) ShowConnectionCard(force: false); };
         _vm.CardRequested += () => ShowConnectionCard(force: true);
+        // In the tray, give back the memory the window and the card used.
+        _window.IsVisibleChanged += (_, _) => { if (!_window.IsVisible) ScheduleTrim(); };
+        _vm.Connected += ScheduleTrim;
         _vm.PropertyChanged += (_, a) =>
         {
             if (a.PropertyName is nameof(MainViewModel.Status) or nameof(MainViewModel.IsConnected) or nameof(MainViewModel.IsPaused))
@@ -135,7 +138,7 @@ public partial class App : Application
         _lastCard = DateTime.UtcNow;
         _card?.Close();
         _card = _vm.CreateCard(ShowWindow);
-        _card.Closed += (_, _) => _card = null;
+        _card.Closed += (_, _) => { _card = null; ScheduleTrim(); };
         _card.Show();
     }
 
@@ -143,6 +146,34 @@ public partial class App : Application
     {
         if (_vm is null || (!_vm.IsConnected && !await _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(10)))) return;
         _vm.NcMode = mode;
+    }
+
+    [System.Runtime.InteropServices.DllImport("psapi.dll")]
+    private static extern bool EmptyWorkingSet(IntPtr process);
+
+    private System.Windows.Threading.DispatcherTimer? _trim;
+
+    /// <summary>
+    /// A few seconds after the window or the card is gone, collects unused objects and hands the unused
+    /// pages back to Windows, so Resonance stays small while it waits in the notification area.
+    /// </summary>
+    private void ScheduleTrim()
+    {
+        _trim ??= new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _trim.Stop();
+        _trim.Tick -= OnTrim;
+        _trim.Tick += OnTrim;
+        _trim.Start();
+    }
+
+    private void OnTrim(object? sender, EventArgs e)
+    {
+        _trim!.Stop();
+        if (_window is { IsVisible: true } || _card is not null) return;
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+        GC.WaitForPendingFinalizers();
+        using var self = System.Diagnostics.Process.GetCurrentProcess();
+        EmptyWorkingSet(self.Handle);
     }
 
     public void ShowWindow()
