@@ -347,5 +347,9 @@
  "share.now.caption": "Resonance lets go of the headphones until you take them back.",
  "share.pause": "Let the phone take over",
  "share.resume": "Take back control",
- "cli.paused": "Resonance has left the headphones to your phone. Click “Take back control” in Resonance."
+ "cli.paused": "Resonance has left the headphones to your phone. Click “Take back control” in Resonance.",
+ "appearance.animation": "Connection animation",
+ "appearance.animation.caption": "A folder of numbered PNG images, played once when the card appears.",
+ "appearance.animation.choose": "Choose a folder…",
+ "appearance.animation.none": "No animation"
 }

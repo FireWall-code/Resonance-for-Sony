@@ -347,5 +347,9 @@
  "share.now.caption": "Resonance lâche le casque jusqu'à ce que vous le repreniez.",
  "share.pause": "Laisser la main au téléphone",
  "share.resume": "Reprendre la main",
- "cli.paused": "Resonance a laissé le casque au téléphone. Cliquez sur « Reprendre la main » dans Resonance."
+ "cli.paused": "Resonance a laissé le casque au téléphone. Cliquez sur « Reprendre la main » dans Resonance.",
+ "appearance.animation": "Animation de connexion",
+ "appearance.animation.caption": "Un dossier d'images PNG numérotées, jouées une fois à l'apparition de la carte.",
+ "appearance.animation.choose": "Choisir un dossier…",
+ "appearance.animation.none": "Sans animation"
 }

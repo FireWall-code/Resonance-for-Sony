@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Resonance.Core.Device;
 using Resonance.Core.Protocol;
 using Brush = System.Windows.Media.Brush;
@@ -32,6 +33,51 @@ public partial class DeviceArt : UserControl
     {
         InitializeComponent();
         Update();
+    }
+
+    /// <summary>
+    /// A folder of numbered PNG frames chosen by the user (24 per second). <see cref="PlayAnimation"/> plays
+    /// it once and keeps the last frame.
+    /// </summary>
+    public string? AnimationFolder { get; set; }
+
+    private DispatcherTimer? _player;
+
+    public void PlayAnimation()
+    {
+        var frames = LoadFrames(AnimationFolder);
+        if (frames.Count == 0) return;
+        int i = 0;
+        Photo.Source = frames[0];
+        Photo.Visibility = Visibility.Visible;
+        Drawing.Visibility = Visibility.Collapsed;
+        _player?.Stop();
+        _player = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromSeconds(1.0 / 24) };
+        _player.Tick += (_, _) =>
+        {
+            if (++i >= frames.Count) { _player!.Stop(); return; }
+            Photo.Source = frames[i];
+        };
+        _player.Start();
+    }
+
+    /// <summary>Shows the last frame without playing (screenshots).</summary>
+    public void ShowAnimationEnd()
+    {
+        var frames = LoadFrames(AnimationFolder);
+        if (frames.Count == 0) return;
+        Photo.Source = frames[^1];
+        Photo.Visibility = Visibility.Visible;
+        Drawing.Visibility = Visibility.Collapsed;
+    }
+
+    private static List<BitmapImage> LoadFrames(string? folder)
+    {
+        var frames = new List<BitmapImage>();
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return frames;
+        foreach (var file in Directory.GetFiles(folder, "*.png").Order(StringComparer.OrdinalIgnoreCase).Take(240))
+            if (LoadPhoto(file) is { } frame) frames.Add(frame);
+        return frames;
     }
 
     public HeadphoneForm Form { get => (HeadphoneForm)GetValue(FormProperty); set => SetValue(FormProperty, value); }

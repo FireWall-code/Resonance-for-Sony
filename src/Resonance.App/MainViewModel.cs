@@ -643,7 +643,24 @@ public sealed class MainViewModel : ObservableObject
     public ICommand PreviewCardCommand => new RelayCommand(() => { CardRequested?.Invoke(); return Task.CompletedTask; });
 
     internal ConnectionCard CreateCard(Action? open) =>
-        new(DeviceName, DeviceForm, DeviceColor, DevicePicture, CardBatteries(), open);
+        new(DeviceName, DeviceForm, DeviceColor, DevicePicture, CardBatteries(), open, DeviceAnimation);
+
+    /// <summary>The user's own animation for the connection card (never shown in documentation screenshots).</summary>
+    public string? DeviceAnimation
+    {
+        get => _documentation ? null : _settings.DeviceAnimation;
+        private set { _settings.DeviceAnimation = value; _settings.Save(); Raise(); Raise(nameof(HasDeviceAnimation)); }
+    }
+    public bool HasDeviceAnimation => !string.IsNullOrEmpty(DeviceAnimation);
+
+    public ICommand ChooseAnimationCommand => new RelayCommand(() =>
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = T("appearance.animation.choose") };
+        if (dialog.ShowDialog() == true) DeviceAnimation = dialog.FolderName;
+        return Task.CompletedTask;
+    });
+
+    public ICommand NoAnimationCommand => new RelayCommand(() => { DeviceAnimation = null; return Task.CompletedTask; });
 
     /// <summary>Battery levels for the connection card: one value for over-ear headphones, else left / right / case.</summary>
     public IReadOnlyList<(string Label, BatteryInfo Battery)> CardBatteries()

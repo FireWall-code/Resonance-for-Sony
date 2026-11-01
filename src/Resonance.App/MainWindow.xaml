@@ -440,6 +440,17 @@
                                     <TextBlock Text="{local:L appearance.picture.caption}" Style="{StaticResource Caption}" />
                                 </StackPanel>
                             </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="{local:L appearance.animation.none}" Command="{Binding NoAnimationCommand}" Margin="0,0,8,0"
+                                            Visibility="{Binding HasDeviceAnimation, Converter={StaticResource BoolToVisibility}}" />
+                                    <Button Content="{local:L appearance.animation.choose}" Command="{Binding ChooseAnimationCommand}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{local:L appearance.animation}" />
+                                    <TextBlock Text="{local:L appearance.animation.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
                         </StackPanel>
                     </Border>
                     <Border Style="{StaticResource Card}" Visibility="{Binding Has[FitTest], Converter={StaticResource BoolToVisibility}}">

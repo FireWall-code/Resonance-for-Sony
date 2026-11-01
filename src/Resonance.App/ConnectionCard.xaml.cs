@@ -27,7 +27,7 @@ public partial class ConnectionCard : Window
 
     /// <param name="open">Called when the card is clicked (opens the main window).</param>
     public ConnectionCard(string name, HeadphoneForm form, Core.Protocol.ModelColor color, string? picture,
-        IReadOnlyList<(string Label, BatteryInfo Battery)> batteries, Action? open)
+        IReadOnlyList<(string Label, BatteryInfo Battery)> batteries, Action? open, string? animation = null)
     {
         InitializeComponent();
         _open = open;
@@ -36,6 +36,7 @@ public partial class ConnectionCard : Window
         Art.Form = form;
         Art.BodyColor = color;
         Art.ImagePath = picture;
+        Art.AnimationFolder = animation;
         foreach (var (label, battery) in batteries) Batteries.Items.Add(BatteryItem(label, battery));
         _dismiss.Tick += (_, _) => { if (!IsMouseOver) Leave(); };
         MouseEnter += (_, _) => _dismiss.Stop();
@@ -52,6 +53,7 @@ public partial class ConnectionCard : Window
         Slide.Y = 0;
         ArtScale.ScaleX = ArtScale.ScaleY = 1;
         foreach (var (ring, level) in _rings) ring.Value = level;
+        Art.ShowAnimationEnd();
     }
 
     private FrameworkElement BatteryItem(string label, BatteryInfo b)
@@ -88,6 +90,7 @@ public partial class ConnectionCard : Window
 
     private void Enter()
     {
+        Art.PlayAnimation();
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
         Root.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, In));
         Slide.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(40, 0, In) { EasingFunction = ease });

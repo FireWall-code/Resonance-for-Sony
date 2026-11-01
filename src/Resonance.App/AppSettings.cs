@@ -30,6 +30,9 @@ public sealed class AppSettings
     /// <summary>The user's own picture of their headphones (a copy in %LOCALAPPDATA%\Resonance), or null for the drawing.</summary>
     public string? DevicePicture { get; set; }
 
+    /// <summary>A folder of numbered PNG frames played when headphones connect, or null.</summary>
+    public string? DeviceAnimation { get; set; }
+
     /// <summary>Action name ("nc", "ambient", "off", "toggle") → key combination.</summary>
     public Dictionary<string, HotkeyEntry> Hotkeys { get; set; } = new();
 
