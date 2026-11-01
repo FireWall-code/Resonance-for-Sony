@@ -37,7 +37,6 @@ To refresh the screenshots in `docs/images`, run the app with your headphones co
 `resonance-cli __screenshot docs/images`: every page is rendered off-screen (the window does not
 appear), with sample track and device names instead of yours.
 
-
 - C# / .NET 10, WPF with the Fluent theme. Match the style of the surrounding code.
 - Protocol changes belong in `src/Resonance.Core`; document new commands in `docs/PROTOCOL.md` with
   their evidence level.

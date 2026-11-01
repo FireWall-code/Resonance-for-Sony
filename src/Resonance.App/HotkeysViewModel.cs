@@ -4,7 +4,7 @@ using static Resonance.Core.Localization.Loc;
 
 namespace Resonance.App;
 
-/// <summary>One action of the "Raccourcis clavier" page and its key combination.</summary>
+/// <summary>One action of the "Keyboard shortcuts" page and its key combination.</summary>
 public sealed class HotkeyRow(HotkeysViewModel owner, string action, string label, string description) : ObservableObject
 {
     private Hotkey? _hotkey;
