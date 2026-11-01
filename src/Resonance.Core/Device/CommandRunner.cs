@@ -241,9 +241,12 @@ public static class CommandRunner
         };
         sb.AppendLine(T("cli.status.header", s.ModelName ?? T("headphones"), s.FirmwareVersion, codec));
         string Bat(BatteryInfo? b) => b is null ? "?" : $"{b.Level}%{(b.IsCharging ? " ⚡" : "")}";
-        sb.AppendLine(T("cli.status.battery", Bat(s.BatteryLeft), Bat(s.BatteryRight), Bat(s.BatteryCase)));
+        sb.AppendLine(s.Battery is { } single && s.BatteryLeft is null
+            ? T("cli.status.battery1", Bat(single))
+            : T("cli.status.battery", Bat(s.BatteryLeft), Bat(s.BatteryRight), Bat(s.BatteryCase)));
         if (s.NoiseControl is { } nc) sb.AppendLine(NoiseLine(nc));
         if (s.Equalizer is { } eq) sb.AppendLine(T("cli.status.eq", PresetName(eq.Preset)));
+        if (s.SoundPressure is { Decibels: { } db }) sb.AppendLine(T("cli.status.level", db));
         sb.AppendLine(T("cli.status.line", OnOffWord(s.Dsee == true),
             s.ListeningModeBgm == true ? $"{T("cli.on")} ({RoomName(s.BgmRoomSize ?? RoomSize.Small)})" : T("cli.off"),
             OnOffWord(s.SpeakToChat?.Enabled == true)));
@@ -312,18 +315,18 @@ public static class CommandRunner
         if (args.Length == 0)
         {
             var bands = s.Equalizer is { } e
-                ? string.Join("  ", e.Bands.Select((b, i) => $"{FormatHz(cap.FrequenciesHz.ElementAtOrDefault(i))}:{b - 6:+0;-0;0}"))
+                ? string.Join("  ", e.Bands.Select((b, i) => $"{FormatHz(cap.FrequenciesHz.ElementAtOrDefault(i))}:{b - cap.Center:+0;-0;0}"))
                 : "?";
             return $"{T("cli.status.eq", PresetName(s.Equalizer?.Preset ?? EqPreset.Off))}\n{bands}\n" +
                    T("cli.eq.presets", string.Join(", ", cap.Presets.Select(PresetCommand)));
         }
         if (Normalize(args[0]) is "bands" or "bandes")
         {
-            var values = args.Skip(1).Select(v => ParseInt(v, -6, 6, T("cli.what.gain"))).ToArray();
+            var values = args.Skip(1).Select(v => ParseInt(v, -cap.Center, cap.Center, T("cli.what.gain"))).ToArray();
             if (values.Length != cap.BandCount) throw new UsageException(T("cli.eq.count", cap.BandCount));
             var preset = s.Equalizer?.Preset is EqPreset.User1 or EqPreset.User2 ? s.Equalizer.Preset : EqPreset.Custom;
-            await hp.SetEqualizerAsync(preset, values.Select(v => v + 6).ToArray());
-            return await Confirm(() => s.Equalizer?.Bands.SequenceEqual(values.Select(v => v + 6)) == true,
+            await hp.SetEqualizerAsync(preset, values.Select(v => v + cap.Center).ToArray());
+            return await Confirm(() => s.Equalizer?.Bands.SequenceEqual(values.Select(v => v + cap.Center)) == true,
                 T("cli.eq.bands", PresetName(preset), string.Join(" ", values.Select(v => v.ToString("+0;-0;0")))));
         }
         var name = Normalize(string.Join(" ", args));
@@ -334,5 +337,6 @@ public static class CommandRunner
         return await Confirm(() => s.Equalizer?.Preset == wanted, T("cli.status.eq", PresetName(wanted)));
     }
 
-    private static string FormatHz(int hz) => hz >= 1000 ? $"{hz / 1000}k" : hz.ToString(CultureInfo.InvariantCulture);
+    private static string FormatHz(int hz) =>
+        hz == 0 ? T("eq.clearbass") : hz >= 1000 ? (hz / 1000.0).ToString("0.#", CultureInfo.InvariantCulture) + "k" : hz.ToString(CultureInfo.InvariantCulture);
 }

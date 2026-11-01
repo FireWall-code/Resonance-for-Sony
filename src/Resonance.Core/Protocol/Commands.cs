@@ -26,32 +26,68 @@ public static class Op
         GetExt = 0xA, RetExt = 0xB, SetExt = 0xC, NtfyExt = 0xD;
 }
 
-/// <summary>"Inquired type" values used by the WF-1000XM6 (and siblings).</summary>
+/// <summary>
+/// Function types a model declares in CONNECT_RET_SUPPORT_FUNCTION (table 1). Each model lists the
+/// variant it implements, which decides the inquired type and payload layout to use.
+/// </summary>
+public static class F1
+{
+    public const byte CodecIndicator = 0x12, UpscalingIndicator = 0x13,
+        Battery = 0x20, LrBattery = 0x21, CradleBattery = 0x22, PowerOff = 0x23, AutoPowerOff = 0x24,
+        AutoPowerOffWearing = 0x25, BatteryThreshold = 0x28, LrBatteryThreshold = 0x29, CradleBatteryThreshold = 0x2A,
+        PresetEq = 0x50, PresetEqNonCustomizable = 0x52, PresetEqAndErrorCode = 0x57,
+        NcOnOffAsmSeamless = 0x64, NcDualSingleAsmSeamless = 0x65, AsmSeamless = 0x67, NcAutoAsmSeamless = 0x68,
+        AmbientControlModeSelect = 0x69, ModeNcDualSingleAsm = 0x6A, ModeNcDualAsm = 0x6B, ModeNcNcssAsm = 0x6C,
+        ModeNcDualAsmNoiseAdaptive = 0x6D,
+        PlaybackFirst = 0xA1, PlaybackLast = 0xA4,
+        GeneralSetting1 = 0xD1, GeneralSetting4 = 0xD4,
+        ConnectionMode = 0xE1, UpscalingAutoOff = 0xE2, ConnectionModeLdac = 0xE3, BgmMode = 0xE4, ConnectionModeClassicLe = 0xE7,
+        VoiceContents = 0xE8, SoundLeakageReduction = 0xE9, BgmModeAndError = 0xEB, UpscalingWithReason = 0xED,
+        PlaybackByWearing = 0xF1, AssignableSetting = 0xF3, VoiceAssistant = 0xF4, WearingStatusDetector = 0xF6,
+        SpeakToChat = 0xFC, QuickAccess = 0xFD, HeadGesture = 0xFF;
+}
+
+/// <summary>Function types of table 2 (CONNECT_RET_SUPPORT_FUNCTION on DATA_MDR_NO2).</summary>
+public static class F2
+{
+    public const byte CaringCharge = 0x22,
+        PairingWithClassOfDeviceBt = 0x32, PairingWithClassOfDeviceLe = 0x33, SourceSwitch = 0x31,
+        VoiceGuidanceFirst = 0x40, VoiceGuidanceVolume = 0x42, VoiceGuidanceVolume5Steps = 0x43, VoiceGuidanceLast = 0x45,
+        SafeListeningHbs1 = 0x50, SafeListeningTws2 = 0x53;
+}
+
+/// <summary>"Inquired type" values (byte 1 of a message).</summary>
 public static class Inq
 {
+    // T1 connect
+    public const byte SupportFunction = 0x00;
     // T1 common
     public const byte CommonConnectionStatus = 0x01, CommonAudioCodec = 0x02, CommonUpscalingEffect = 0x03;
     // T1 connect device info
     public const byte DeviceInfoModelName = 0x01, DeviceInfoFwVersion = 0x02, DeviceInfoSeriesColor = 0x03;
     // T1 power
     public const byte Battery = 0x00, LrBattery = 0x01, CradleBattery = 0x02, PowerOff = 0x03,
-        AutoPowerOff = 0x04, AutoPowerOffWearing = 0x05, BatterySafeMode = 0x0B;
+        AutoPowerOff = 0x04, AutoPowerOffWearing = 0x05, BatteryThreshold = 0x08, LrBatteryThreshold = 0x09,
+        CradleBatteryThreshold = 0x0A, BatterySafeMode = 0x0B;
     // T1 eq
-    public const byte PresetEq = 0x00, PresetEqAndErrorCode = 0x04;
-    // T1 ncasm
-    public const byte NcAsmNoiseAdaptive = 0x19, NcAmbToggle = 0x30;
+    public const byte PresetEq = 0x00, PresetEqNonCustomizable = 0x02, PresetEqAndErrorCode = 0x04;
+    // T1 ncasm: one variant per model family (see NoiseVariant)
+    public const byte NcOnOffAsmSeamless = 0x13, NcModeSwitchAsmSeamless = 0x14, NcAutoAsmSeamless = 0x15,
+        ModeNcDualSingleAsm = 0x16, ModeNcDualAsm = 0x17, ModeNcNcssAsm = 0x18, NcAsmNoiseAdaptive = 0x19,
+        AsmSeamless = 0x22, NcAmbToggle = 0x30;
     // T1 sense
     public const byte AdaptiveControl = 0x01;
     // T1 play
     public const byte PlaybackController = 0x01, MusicVolume = 0x20, CallVolume = 0x21;
     // T1 sar / auto play
     public const byte AutoPlay = 0x01;
-    // T1 general settings
+    // T1 general settings (self-describing slots D1-D4; meaning depends on the model)
     public const byte GsSidetone = 0xD1, GsMultipoint = 0xD2, GsOneSideNc = 0xD4;
     // T1 audio
-    public const byte ConnectionModeLdac = 0x02, Upscaling = 0x01, BgmModeAndError = 0x09, ConnectionModeClassicLe = 0x05;
+    public const byte ConnectionMode = 0x00, Upscaling = 0x01, ConnectionModeLdac = 0x02, BgmMode = 0x03,
+        ConnectionModeClassicLe = 0x05, VoiceContents = 0x06, SoundLeakageReduction = 0x07, BgmModeAndError = 0x09;
     // T1 system
-    public const byte AssignableSettings = 0x03, VoiceAssistant = 0x04, WearingStatusDetector = 0x06,
+    public const byte PlaybackByWearing = 0x01, AssignableSettings = 0x03, VoiceAssistant = 0x04, WearingStatusDetector = 0x06,
         EarpieceSelection = 0x07, SpeakToChat = 0x0C, QuickAccess = 0x0D, HeadGesture = 0x0F;
     // T2 power
     public const byte CaringCharge = 0x01;

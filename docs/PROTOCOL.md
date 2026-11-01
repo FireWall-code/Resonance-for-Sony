@@ -96,6 +96,40 @@ this is how an app adapts its UI to each model.
 | Earbud fit test | — | `F4 06 <01 enter/00 leave> 00`, then `F8 06 <00 start/01 cancel> 00 FF FF` | progress `F9 06 <state> <error> …`, result `FD 06 <L 00=good> <R> …` | Tested |
 | Power off | — | `24 03 01` | | App |
 
+## 4b. Other models: support functions and variants
+
+At connection, `CONNECT_GET_SUPPORT_FUNCTION` (`06 00` on table 1, and on table 2) returns
+`07 00 <n> (<function> <priority>)×n`. Each function type names the variant a model implements, and
+the variant decides the inquired type and the payload layout. Resonance only queries declared functions;
+headphones that do not answer get the WF-1000XM6 command set.
+
+| Function (table 1) | Inquired type | `RET_PARAM` payload after the inquired type |
+|---|---|---|
+| `6D` NC/ASM + noise adaptation (WF-1000XM6) | NC/ASM `19` | `<chg> <on> <mode> <voice> <level> <adaptive> <sensitivity>` |
+| `6B` / `6C` NC/ASM dual (WF-1000XM5) | `17` / `18` | `<chg> <on> <mode> <voice> <level>` |
+| `68` / `6A` NC/ASM auto / dual-single | `15` / `16` | `<chg> <on> <mode> <nc value> <voice> <level>` |
+| `64` NC on/off + ambient level | `13` | `<chg> <on> <nc on> <voice> <level>` |
+| `65` NC mode switch + ambient level | `14` | `<chg> <on> <nc value> <voice> <level>` |
+| `67` ambient sound only (LinkBuds) | `22` | `<chg> <on> <voice> <level>` |
+| `20` / `28` single battery (over-ear) | power `00` / `08` | `<level> <charging>` |
+| `50` / `52` / `57` preset EQ | EQ `00` / `02` / `04` | `<preset> <n> <steps>×n`; 6 bands = Clear Bass + 5 bands, steps 0-20 |
+| `E1` / `E3` connection mode | audio `00` / `02` | `<priority>`; the XM6 answers `02` while only declaring `E7` |
+| `E4` / `EB` background music | audio `03` / `09` | `<on/off> <room size>` |
+| `E8` voice boost, `E9` sound leakage reduction | audio `06`, `07` | `<on/off>` |
+| `F1` pause when removed | system `01` | `<on/off>` |
+| `D1`-`D4` general settings | general setting `D1`-`D4` | see below |
+
+**General settings describe themselves.** `GET_CAPABILITY` returns
+`D1 <slot> <type 00 switch / 01 list> <format> <len> <name> <len> <summary>`, followed for a list by
+`<n> (<format> <len> <name> <len> <summary>)×n`. Names are identifiers such as `SIDETONE_SETTING`,
+`MULTIPOINT_SETTING`, `TWS_ONE_SIDE_USE_NCASM_SETTING` or `TAP_SENSITIVITY_SETTING`; list choices are
+`<name>_ELEM_LOW`, `<name>_ELEM_HIGH`… `RET_PARAM` is `D7 <slot> <type> <value>` (a switch uses
+`00` on / `01` off, a list the choice index), and `SET_PARAM` is `D8 <slot> <type> <value>`.
+
+**Sound level (table 2).** Functions `50`-`53` (safe listening for over-ear / earbuds) map to inquired
+type `00`-`03`. `5A <type>` returns `5B <type> <level dB, FF none> <reason 00 not playing / 01 call /
+02 not worn>`. The headphones only answer on request.
+
 ## 5. Observed behaviour
 
 - **Noise cancelling mode**: the headphones ignore the ambient level, voice focus and auto ambient
@@ -118,7 +152,7 @@ this is how an app adapts its UI to each model.
 
 | Feature | Reason |
 |---|---|
-| Safe listening (T2 `50`) | `55 xx` logs decoded: per earbud (`01` L, `02` R), u32 timestamp, level, u32 total. The conversion into a "% of the WHO weekly dose" is computed by the phone app and was not recovered. |
+| Safe listening dose (T2 `50`) | The live level is shown (see 4b). The `55 xx` logs are decoded (per earbud, u32 timestamp, level, u32 total), but the conversion into a "% of the WHO weekly dose" is computed by the phone app and was not recovered. |
 | LE Audio (`E8 05 <priority> <LE>`) | Possible, but switching drops the Classic link used for control, and Windows needs LE Audio hardware. |
 | Adaptive sound control (`70`) | The phone detects activity / location and pushes settings. |
 | 360 audio / head tracking / SAR (`B0`, `B6`, `B7`) | Sensor data for the phone's spatial renderer and apps. |

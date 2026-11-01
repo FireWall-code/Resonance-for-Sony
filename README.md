@@ -17,13 +17,15 @@ phones. Resonance brings its settings to Windows 10 and 11, with no emulator and
 ## Features
 
 - **Noise control**: noise cancelling, ambient sound (level 1-20, voice focus, auto ambient), off
-- **10-band equalizer** with presets and custom curves
-- **Battery** for each earbud and the case, codec (LDAC / AAC / SBC), now playing, volume
-- **Audio**: DSEE Extreme, connection priority, background music mode
+- **Equalizer** with presets and custom curves: 10 bands, or Clear Bass + 5 bands, as the model offers
+- **Battery** for each earbud and the case (or the headband), codec (LDAC / AAC / SBC), now playing, volume
+- **Sound level**: the live level the headphones measure while music plays (safe listening)
+- **Audio**: DSEE Extreme, connection priority, background music, voice boost, sound leakage reduction
 - **Speak-to-chat** with sensitivity and timeout
 - **Touch controls**: presets for each earbud, gesture mapping, quick access, head gestures
 - **Devices**: see, connect, disconnect, forget and switch between paired devices (multipoint)
-- **Settings**: auto power off, battery care, sidetone, voice guidance, voice assistant, earbud fit test
+- **Settings**: auto power off, battery care, sidetone, pause when removed, voice guidance, voice assistant,
+  earbud fit test, plus any model-specific setting the headphones describe themselves (tap sensitivity…)
 - **Windows-only extras**: notification area icon (click to cycle noise modes), global keyboard shortcuts,
   start with Windows, a scriptable command line, light / dark theme, English and French
 
@@ -37,10 +39,15 @@ phones. Resonance brings its settings to Windows 10 and 11, with no emulator and
 
 ## Supported headphones
 
+Resonance asks the headphones which functions they support and only shows those, in the layout each
+model uses (noise control, equalizer, battery and listening mode variants).
+
 | Model | Status |
 |---|---|
 | WF-1000XM6 | Fully tested (every setting verified on the device) |
-| Other Sound Connect headphones (WF-1000XM5, WH-1000XM5/XM6, LinkBuds…) | Should connect; features vary. [Help add yours](CONTRIBUTING.md#add-support-for-your-headphones) |
+| WF-1000XM5, LinkBuds Clip | Every page checked against recorded sessions; changing settings not yet confirmed by an owner |
+| Other Sound Connect headphones (WH-1000XM5/XM6, WF-C700N, LinkBuds…) | Should work: same protocol and variants. [Help confirm yours](CONTRIBUTING.md#add-support-for-your-headphones) |
+| Older models (WH-1000XM3/XM4, WF-1000XM3/XM4) | Not yet: they use the first version of the protocol |
 
 ## Install
 
@@ -112,6 +119,12 @@ can drop a connection.
 ## Contributing
 
 Translations, support for more models and bug reports are very welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Acknowledgements
+
+The variant layouts for other models were cross-checked against the recorded sessions and device notes of
+[mos9527/SonyHeadphonesClient](https://github.com/mos9527/SonyHeadphonesClient) (MIT), the most thorough
+open-source work on these headphones.
 
 ## Disclaimer
 

@@ -12,7 +12,47 @@ public sealed record NoiseControlState(
 
 public sealed record EqualizerState(EqPreset Preset, int[] Bands);
 
-public sealed record EqualizerCapability(int BandCount, int Steps, IReadOnlyList<EqPreset> Presets, IReadOnlyList<int> FrequenciesHz);
+public sealed record EqualizerCapability(int BandCount, int Steps, IReadOnlyList<EqPreset> Presets, IReadOnlyList<int> FrequenciesHz)
+{
+    /// <summary>Step value of a flat band (0 dB).</summary>
+    public int Center => (Steps - 1) / 2;
+
+    /// <summary>Clear Bass + 5 bands (WH-1000XM4/XM5, WF-1000XM5…) when the first band has no frequency.</summary>
+    public bool HasClearBass => BandCount == 6;
+
+    /// <summary>
+    /// Layout of models that do not describe their equalizer: 10 bands of ±6 dB, or Clear Bass and
+    /// 5 bands of ±10 steps (frequency 0 marks Clear Bass).
+    /// </summary>
+    public static EqualizerCapability Default(int bands) => bands switch
+    {
+        6 => new(6, 21, StandardPresets, [0, 400, 1000, 2500, 6300, 16000]),
+        5 => new(5, 21, StandardPresets, [400, 1000, 2500, 6300, 16000]),
+        _ => new(bands, 13, StandardPresets, bands == 10 ? [31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000] : []),
+    };
+
+    private static readonly EqPreset[] StandardPresets =
+    [
+        EqPreset.Off, EqPreset.Bright, EqPreset.Excited, EqPreset.Mellow, EqPreset.Relaxed, EqPreset.Vocal,
+        EqPreset.Treble, EqPreset.Bass, EqPreset.Speech, EqPreset.Custom, EqPreset.User1, EqPreset.User2,
+    ];
+}
+
+/// <summary>Names of the self-described general settings Resonance has dedicated controls for.</summary>
+public static class GeneralSettingNames
+{
+    public const string Sidetone = "SIDETONE_SETTING", Multipoint = "MULTIPOINT_SETTING",
+        OneSideNoiseControl = "TWS_ONE_SIDE_USE_NCASM_SETTING";
+
+    /// <summary>Slot meaning on the WF-1000XM6, for headphones that do not describe their settings.</summary>
+    public static string Legacy(byte slot) => slot switch
+    {
+        Inq.GsSidetone => Sidetone,
+        Inq.GsMultipoint => Multipoint,
+        Inq.GsOneSideNc => OneSideNoiseControl,
+        _ => $"SETTING_{slot:X2}",
+    };
+}
 
 public sealed record SpeakToChatState(bool Enabled, DetectSensitivity Sensitivity, ModeOutTime ModeOutTime);
 
@@ -43,6 +83,47 @@ public sealed record DeviceActionResult(DeviceAction Action, string Address, boo
 
 public sealed record PairedDevice(string Address, string Name, bool Connected, bool Playing);
 
+/// <summary>
+/// A model-specific setting the headphones describe themselves (GENERAL_SETTING D1-D4): its name is an
+/// identifier such as "MULTIPOINT_SETTING", and a list setting carries its own choices.
+/// </summary>
+public sealed record GeneralSetting(byte Id, string Name, bool IsList, IReadOnlyList<GeneralSettingOption> Options, byte? Value)
+{
+    /// <summary>On/off value of a boolean setting (0x00 means on).</summary>
+    public bool IsOn => Value == OnOff.On;
+}
+
+public sealed record GeneralSettingOption(byte Value, string Name);
+
+/// <summary>Live sound level measured by the headphones (safe listening), in dB; null while nothing plays.</summary>
+public sealed record SoundPressure(int? Decibels, SoundPressureReason Reason);
+
+public enum SoundPressureReason : byte { NotPlaying = 0x00, InCall = 0x01, Detached = 0x02, Measured = 0xFE }
+
+/// <summary>
+/// Function types the model declares at connection (CONNECT_RET_SUPPORT_FUNCTION). Empty when the
+/// headphones did not answer, in which case the WF-1000XM6 command set is assumed.
+/// </summary>
+public sealed class SupportedFunctions
+{
+    private readonly HashSet<byte> _t1 = [], _t2 = [];
+    public bool Known => _t1.Count > 0;
+    public IReadOnlyCollection<byte> Table1 => _t1;
+    public IReadOnlyCollection<byte> Table2 => _t2;
+    public bool Has(byte f1) => _t1.Contains(f1);
+    public bool Has2(byte f2) => _t2.Contains(f2);
+    public bool HasAny(byte first, byte last) => _t1.Any(f => f >= first && f <= last);
+    public bool HasAny2(byte first, byte last) => _t2.Any(f => f >= first && f <= last);
+
+    /// <summary>Reads "07 00 &lt;n&gt; (&lt;function&gt; &lt;priority&gt;)×n".</summary>
+    internal void Load(bool table2, byte[] p)
+    {
+        var set = table2 ? _t2 : _t1;
+        set.Clear();
+        for (int n = 0, i = 3; n < p[2] && i < p.Length; n++, i += 2) set.Add(p[i]);
+    }
+}
+
 /// <summary>Everything the app knows about the headphones. Null = not reported by the device.</summary>
 public sealed class HeadphoneState
 {
@@ -52,12 +133,19 @@ public sealed class HeadphoneState
     public AudioCodec? Codec { get; internal set; }
     public bool? DseeActive { get; internal set; }
 
+    public SupportedFunctions Functions { get; } = new();
+
+    /// <summary>Single battery of over-ear headphones.</summary>
+    public BatteryInfo? Battery { get; internal set; }
     public BatteryInfo? BatteryLeft { get; internal set; }
     public BatteryInfo? BatteryRight { get; internal set; }
     public BatteryInfo? BatteryCase { get; internal set; }
 
     public NoiseControlState? NoiseControl { get; internal set; }
     public NcAmbCycle? NcAmbKeyCycle { get; internal set; }
+    /// <summary>NC/ASM inquired type the model uses (Inq.NcOnOffAsmSeamless…NcAsmNoiseAdaptive, AsmSeamless).</summary>
+    public byte? NoiseVariant { get; internal set; }
+    public SoundPressure? SoundPressure { get; internal set; }
 
     public EqualizerCapability? EqualizerCapability { get; internal set; }
     public EqualizerState? Equalizer { get; internal set; }
@@ -70,6 +158,12 @@ public sealed class HeadphoneState
     public SpeakToChatState? SpeakToChat { get; internal set; }
     public AutoPowerOff? AutoPowerOff { get; internal set; }
     public IReadOnlyList<AutoPowerOff>? AutoPowerOffOptions { get; internal set; }
+    public bool? PauseWhenRemoved { get; internal set; }
+    public bool? VoiceBoost { get; internal set; }
+    public bool? SoundLeakageReduction { get; internal set; }
+    /// <summary>Self-described settings, by slot (D1-D4).</summary>
+    public IReadOnlyDictionary<byte, GeneralSetting> GeneralSettings => _generalSettings;
+    internal readonly SortedDictionary<byte, GeneralSetting> _generalSettings = new();
     public bool? Multipoint { get; internal set; }
     public bool? Sidetone { get; internal set; }
     public bool? OneSideNoiseControl { get; internal set; }

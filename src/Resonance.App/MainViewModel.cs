@@ -45,17 +45,66 @@ public sealed class Debouncer(TimeSpan delay)
     }
 }
 
-public sealed class BandViewModel(MainViewModel owner, int index, string label) : ObservableObject
+public sealed class BandViewModel(MainViewModel owner, int index, string label, int center) : ObservableObject
 {
     private int _value;
     public string Label { get; } = label;
-    /// <summary>Gain in dB (−6…+6); the protocol stores steps 0…12.</summary>
+    /// <summary>Gain relative to flat (−center…+center); the protocol stores steps 0…2×center.</summary>
     public int Value
     {
         get => _value;
         set { if (SetField(ref _value, value)) owner.OnBandChanged(index); }
     }
-    internal void Load(int steps) { _value = steps - 6; Raise(nameof(Value)); }
+    public int Minimum => -center;
+    public int Maximum => center;
+    internal int Steps => _value + center;
+    internal void Load(int steps) { _value = steps - center; Raise(nameof(Value)); }
+}
+
+/// <summary>A setting the headphones describe themselves: a switch, or a list of choices.</summary>
+public sealed class GeneralSettingViewModel : ObservableObject
+{
+    private readonly MainViewModel _owner;
+    private bool _isOn;
+    private Option<byte>? _selected;
+
+    public GeneralSettingViewModel(MainViewModel owner, GeneralSetting gs)
+    {
+        _owner = owner;
+        Slot = gs.Id;
+        Name = gs.Name;
+        Label = Labels.GeneralSettingName(gs.Name);
+        IsList = gs.IsList;
+        Choices = gs.Options.Select(o => new Option<byte>(o.Value, Labels.GeneralSettingChoice(gs.Name, o.Name))).ToList();
+        Load(gs);
+    }
+
+    public byte Slot { get; }
+    public string Name { get; }
+    public string Label { get; }
+    public bool IsList { get; }
+    public bool IsSwitch => !IsList;
+    public IReadOnlyList<Option<byte>> Choices { get; }
+
+    public bool IsOn
+    {
+        get => _isOn;
+        set { if (SetField(ref _isOn, value)) _owner.OnGeneralSettingChanged(Slot, OnOff.From(value)); }
+    }
+
+    public Option<byte>? Selected
+    {
+        get => _selected;
+        set { if (SetField(ref _selected, value) && value != null) _owner.OnGeneralSettingChanged(Slot, value.Value); }
+    }
+
+    internal void Load(GeneralSetting gs)
+    {
+        _isOn = gs.IsOn;
+        _selected = Choices.FirstOrDefault(c => c.Value == gs.Value);
+        Raise(nameof(IsOn));
+        Raise(nameof(Selected));
+    }
 }
 
 public sealed class GestureViewModel(MainViewModel owner, GestureCapability cap) : ObservableObject
@@ -116,6 +165,10 @@ public sealed class MainViewModel : ObservableObject
         PreviousCommand = new RelayCommand(() => Send(hp => hp.SendPlaybackAsync(PlaybackControl.Previous)));
         PowerOffCommand = new RelayCommand(PowerOffAsync);
         ReconnectCommand = new RelayCommand(() => ConnectLoopAsync());
+        // The sound level is only worth asking for while someone can see it.
+        var levelTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        levelTimer.Tick += async (_, _) => { if (Application.Current.MainWindow is { IsVisible: true }) await RefreshSoundLevelAsync(); };
+        levelTimer.Start();
     }
 
     public event Action? DeviceStateChanged;
@@ -175,6 +228,15 @@ public sealed class MainViewModel : ObservableObject
         finally { Interlocked.Exchange(ref _connecting, 0); }
     }
 
+    /// <summary>Shows a recorded session: the pages display that model's settings, changes are refused.</summary>
+    public void ShowRecording(string folder)
+    {
+        _hp = Headphones.FromRecording(Recording.Load(folder));
+        IsConnected = true;
+        Status = T("status.recording", System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(folder)));
+        Sync();
+    }
+
     private async void OnDisconnected()
     {
         var hp = _hp;
@@ -212,8 +274,10 @@ public sealed class MainViewModel : ObservableObject
             DeviceName = s.ModelName ?? _hp.DeviceName ?? T("headphones");
             Firmware = s.FirmwareVersion is { } fw ? T("firmware", fw) : "";
             Codec = s.Codec is { } c ? Labels.Of(c) : "";
-            BatteryLeft = s.BatteryLeft; BatteryRight = s.BatteryRight; BatteryCase = s.BatteryCase;
+            Battery = s.Battery; BatteryLeft = s.BatteryLeft; BatteryRight = s.BatteryRight; BatteryCase = s.BatteryCase;
             Raise(nameof(BatterySummary));
+            Has = Features(s);
+            SoundLevel = s.SoundPressure is { } sp ? Labels.Of(sp) : "";
 
             if (s.NoiseControl is { } nc)
             {
@@ -237,14 +301,15 @@ public sealed class MainViewModel : ObservableObject
                 Status = $"{verb} : {(da.InProgress ? T("device.inprogress") : da.Success ? T("device.ok") : T("device.fail"))}";
             }
 
-            if (s.EqualizerCapability is { } cap && EqPresets.Count != cap.Presets.Count)
+            if (s.EqualizerCapability is { } cap && (EqPresets.Count != cap.Presets.Count || Bands.Count != cap.BandCount))
             {
                 EqPresets = cap.Presets.Select(p => new Option<EqPreset>(p, Labels.Of(p))).ToList();
                 Bands.Clear();
                 for (int i = 0; i < cap.BandCount; i++)
                 {
-                    int hz = i < cap.FrequenciesHz.Count ? cap.FrequenciesHz[i] : 0;
-                    Bands.Add(new BandViewModel(this, i, hz >= 1000 ? $"{hz / 1000}k" : $"{hz}"));
+                    int hz = i < cap.FrequenciesHz.Count ? cap.FrequenciesHz[i] : -1;
+                    var label = hz == 0 ? T("eq.clearbass") : hz >= 1000 ? $"{hz / 1000.0:0.#}k" : hz > 0 ? $"{hz}" : "";
+                    Bands.Add(new BandViewModel(this, i, label, cap.Center));
                 }
             }
             if (s.Equalizer is { } eq)
@@ -257,6 +322,10 @@ public sealed class MainViewModel : ObservableObject
             SelectedPriority = Labels.Priorities.FirstOrDefault(o => o.Value == s.ConnectionPriority);
             Bgm = s.ListeningModeBgm ?? false;
             SelectedRoomSize = Labels.RoomSizes.FirstOrDefault(o => o.Value == s.BgmRoomSize);
+            VoiceBoost = s.VoiceBoost ?? false;
+            LeakageReduction = s.SoundLeakageReduction ?? false;
+            PauseWhenRemoved = s.PauseWhenRemoved ?? false;
+            SyncGeneralSettings(s);
 
             if (s.SpeakToChat is { } stc)
             {
@@ -320,7 +389,8 @@ public sealed class MainViewModel : ObservableObject
     // ------------------------------------------------------------ header
 
     private string _deviceName = "Resonance", _firmware = "", _codec = "";
-    private BatteryInfo? _batteryLeft, _batteryRight, _batteryCase;
+    private BatteryInfo? _battery, _batteryLeft, _batteryRight, _batteryCase;
+    public BatteryInfo? Battery { get => _battery; private set => SetField(ref _battery, value); }
     public string DeviceName { get => _deviceName; private set => SetField(ref _deviceName, value); }
     public string Firmware { get => _firmware; private set => SetField(ref _firmware, value); }
     public string Codec { get => _codec; private set => SetField(ref _codec, value); }
@@ -328,7 +398,9 @@ public sealed class MainViewModel : ObservableObject
     public BatteryInfo? BatteryRight { get => _batteryRight; private set => SetField(ref _batteryRight, value); }
     public BatteryInfo? BatteryCase { get => _batteryCase; private set => SetField(ref _batteryCase, value); }
     public string BatterySummary =>
-        IsConnected ? T("battery.summary", BatteryLeft?.Level, BatteryRight?.Level, BatteryCase?.Level) : Status;
+        !IsConnected ? Status
+        : Battery is { } b && BatteryLeft is null ? T("battery.summary.single", b.Level)
+        : T("battery.summary", BatteryLeft?.Level, BatteryRight?.Level, BatteryCase?.Level);
 
     // ------------------------------------------------------------ now playing
 
@@ -407,6 +479,76 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Tray shortcut: cycles noise cancelling → ambient → off.</summary>
     public void CycleNoiseMode() => NcMode = (NcMode + 1) % 3;
 
+    // ------------------------------------------------------------ what these headphones support
+
+    private IReadOnlyDictionary<string, bool> _has = Features(null);
+    /// <summary>Feature flags for the XAML (Has[Equalizer]…): a control only shows when the headphones support it.</summary>
+    public IReadOnlyDictionary<string, bool> Has { get => _has; private set => SetField(ref _has, value); }
+
+    /// <summary>
+    /// A setting is supported when the headphones reported it (null = not asked or no answer). Actions with
+    /// nothing to read use the declared function list, or are assumed when the model does not declare one.
+    /// </summary>
+    private static Dictionary<string, bool> Features(HeadphoneState? s)
+    {
+        bool Declared(byte f) => s is not null && (!s.Functions.Known || s.Functions.Has(f));
+        var nc = s?.NoiseControl is not null;
+        var has = new Dictionary<string, bool>
+        {
+            ["NoiseControl"] = nc,
+            ["NoiseCancelling"] = nc && s!.NoiseVariant != Inq.AsmSeamless,
+            ["AutoAmbient"] = nc && (s!.NoiseVariant ?? Inq.NcAsmNoiseAdaptive) == Inq.NcAsmNoiseAdaptive,
+            ["SpeakToChat"] = s?.SpeakToChat is not null,
+            ["SoundLevel"] = s?.SoundPressure is not null,
+            ["Playback"] = s?.NowPlaying is not null || s?.MusicVolume is not null,
+            ["Equalizer"] = s?.Equalizer is not null,
+            ["Dsee"] = s?.Dsee is not null,
+            ["Connection"] = s?.ConnectionPriority is not null,
+            ["Bgm"] = s?.ListeningModeBgm is not null,
+            ["VoiceBoost"] = s?.VoiceBoost is not null,
+            ["Leakage"] = s?.SoundLeakageReduction is not null,
+            ["TouchPresets"] = s?.TouchLeft is not null,
+            ["HeadGestures"] = s?.HeadGestures is not null,
+            ["Multipoint"] = s?.Multipoint is not null,
+            ["OneSideNc"] = s?.OneSideNoiseControl is not null,
+            ["Sidetone"] = s?.Sidetone is not null,
+            ["VoiceGuidance"] = s?.VoiceGuidance is not null,
+            ["VoiceGuidanceVolume"] = s?.VoiceGuidanceVolume is not null,
+            ["VoiceAssistant"] = s?.VoiceAssistant is not null,
+            ["PauseWhenRemoved"] = s?.PauseWhenRemoved is not null,
+            ["AutoPowerOff"] = s?.AutoPowerOff is not null,
+            ["CaringCharge"] = s?.CaringCharge is not null,
+            ["FitTest"] = Declared(F1.WearingStatusDetector),
+            ["PowerOff"] = Declared(F1.PowerOff),
+            ["Devices"] = s?.PairedDevices is not null,
+            ["SingleBattery"] = s?.Battery is not null && s.BatteryLeft is null,
+            ["EarbudBatteries"] = s?.BatteryLeft is not null,
+            ["CaseBattery"] = s?.BatteryCase is not null,
+        };
+        has["Quality"] = has["Dsee"] || has["Connection"] || has["Bgm"] || has["VoiceBoost"] || has["Leakage"];
+        has["Touch"] = has["TouchPresets"] || has["HeadGestures"] || s?.QuickAccess is { Count: 2 };
+        has["BatterySettings"] = has["AutoPowerOff"] || has["CaringCharge"];
+        has["NoQuality"] = !has["Quality"];
+        has["NoTouch"] = !has["Touch"];
+        has["NoEqualizer"] = !has["Equalizer"];
+        has["NoDevices"] = !has["Devices"];
+        return has;
+    }
+
+    // ------------------------------------------------------------ sound level (safe listening)
+
+    private string _soundLevel = "";
+    public string SoundLevel { get => _soundLevel; private set => SetField(ref _soundLevel, value); }
+
+    /// <summary>The headphones measure the level continuously but only report it on request.</summary>
+    public async Task RefreshSoundLevelAsync()
+    {
+        if (_hp is { } hp && _has.GetValueOrDefault("SoundLevel"))
+        {
+            try { await hp.RefreshSoundPressureAsync(); } catch (Exception) { /* next tick */ }
+        }
+    }
+
     // ------------------------------------------------------------ equalizer
 
     private IReadOnlyList<Option<EqPreset>> _eqPresets = [];
@@ -429,7 +571,7 @@ public sealed class MainViewModel : ObservableObject
         // Editing a band switches to the custom preset, like the phone app.
         var preset = _selectedEqPreset?.Value is EqPreset.Custom or EqPreset.User1 or EqPreset.User2 or EqPreset.User3
             ? _selectedEqPreset.Value : EqPreset.Custom;
-        var steps = Bands.Select(b => b.Value + 6).ToArray();
+        var steps = Bands.Select(b => b.Steps).ToArray();
         _eqDebounce.Run(() => Send(hp => hp.SetEqualizerAsync(preset, steps)));
     }
 
@@ -453,6 +595,14 @@ public sealed class MainViewModel : ObservableObject
     public IReadOnlyList<Option<RoomSize>> RoomSizes => Labels.RoomSizes;
     public Option<RoomSize>? SelectedRoomSize { get => _selectedRoomSize; set { if (SetField(ref _selectedRoomSize, value)) PushBgm(); } }
     private void PushBgm() => _ = Send(hp => hp.SetListeningModeAsync(_bgm, _selectedRoomSize?.Value ?? RoomSize.Small));
+
+    private bool _voiceBoost, _leakageReduction;
+    public bool VoiceBoost { get => _voiceBoost; set { if (SetField(ref _voiceBoost, value)) _ = Send(hp => hp.SetVoiceBoostAsync(value)); } }
+    public bool LeakageReduction
+    {
+        get => _leakageReduction;
+        set { if (SetField(ref _leakageReduction, value)) _ = Send(hp => hp.SetSoundLeakageReductionAsync(value)); }
+    }
 
     // ------------------------------------------------------------ touch
 
@@ -520,6 +670,36 @@ public sealed class MainViewModel : ObservableObject
     public bool CaringCharge { get => _caringCharge; set { if (SetField(ref _caringCharge, value)) _ = Send(hp => hp.SetCaringChargeAsync(value)); } }
     public string CaringChargeLabel { get => _caringChargeLabel; private set => SetField(ref _caringChargeLabel, value); }
     public bool VoiceGuidance { get => _voiceGuidance; set { if (SetField(ref _voiceGuidance, value)) _ = Send(hp => hp.SetVoiceGuidanceAsync(value)); } }
+
+    private bool _pauseWhenRemoved;
+    public bool PauseWhenRemoved
+    {
+        get => _pauseWhenRemoved;
+        set { if (SetField(ref _pauseWhenRemoved, value)) _ = Send(hp => hp.SetPauseWhenRemovedAsync(value)); }
+    }
+
+    private IReadOnlyList<GeneralSettingViewModel> _otherSettings = [];
+    /// <summary>Self-described settings without a dedicated control (tap sensitivity…).</summary>
+    public IReadOnlyList<GeneralSettingViewModel> OtherSettings { get => _otherSettings; private set => SetField(ref _otherSettings, value); }
+
+    private static readonly string[] DedicatedSettings =
+        [GeneralSettingNames.Multipoint, GeneralSettingNames.Sidetone, GeneralSettingNames.OneSideNoiseControl];
+
+    private void SyncGeneralSettings(HeadphoneState s)
+    {
+        var others = s.GeneralSettings.Values.Where(g => g.Value is not null && !DedicatedSettings.Contains(g.Name)).ToList();
+        if (others.Select(g => (g.Id, g.Name)).SequenceEqual(OtherSettings.Select(v => (v.Slot, v.Name))))
+        {
+            foreach (var (vm, gs) in OtherSettings.Zip(others)) vm.Load(gs);
+            return;
+        }
+        OtherSettings = others.Select(g => new GeneralSettingViewModel(this, g)).ToList();
+    }
+
+    internal void OnGeneralSettingChanged(byte slot, byte value)
+    {
+        if (!_loading) _ = Send(hp => hp.SetGeneralSettingAsync(slot, value));
+    }
 
     public ICommand PowerOffCommand { get; }
     public ICommand ReconnectCommand { get; }

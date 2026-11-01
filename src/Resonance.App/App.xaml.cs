@@ -33,6 +33,9 @@ public partial class App : Application
 
         // "--background" starts hidden in the tray (for the Windows startup entry).
         if (!e.Args.Contains("--background")) _window.Show();
+        // "--replay <folder>" shows a recorded session instead of connecting (other models, bug reports).
+        int replay = Array.IndexOf(e.Args, "--replay");
+        if (replay >= 0 && replay + 1 < e.Args.Length) { _vm.ShowRecording(e.Args[replay + 1]); return; }
         await _vm.ConnectLoopAsync();
     }
 

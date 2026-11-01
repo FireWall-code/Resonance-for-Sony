@@ -16,7 +16,15 @@
                 <StackPanel>
                     <TextBlock Text="{Binding DeviceName}" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding Firmware}" Style="{StaticResource Caption}" Margin="0,2,0,12" />
-                    <UniformGrid Columns="3" Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel HorizontalAlignment="Left" Visibility="{Binding Has[SingleBattery], Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{local:L side.battery}" Style="{StaticResource Caption}" />
+                        <TextBlock FontSize="18" FontWeight="SemiBold">
+                            <Run Text="{Binding Battery.Level, Mode=OneWay}" /><Run Text="%" />
+                        </TextBlock>
+                        <TextBlock Text="{local:L battery.charging}" Style="{StaticResource Caption}"
+                                   Visibility="{Binding Battery.IsCharging, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                    <UniformGrid Columns="3" Visibility="{Binding Has[EarbudBatteries], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel HorizontalAlignment="Center">
                             <TextBlock Text="{local:L side.left}" Style="{StaticResource Caption}" HorizontalAlignment="Center" />
                             <TextBlock FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center">
@@ -33,7 +41,7 @@
                             <TextBlock Text="{local:L battery.charging}" Style="{StaticResource Caption}" HorizontalAlignment="Center"
                                        Visibility="{Binding BatteryRight.IsCharging, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
-                        <StackPanel HorizontalAlignment="Center">
+                        <StackPanel HorizontalAlignment="Center" Visibility="{Binding Has[CaseBattery], Converter={StaticResource BoolToVisibility}}">
                             <TextBlock Text="{local:L side.case}" Style="{StaticResource Caption}" HorizontalAlignment="Center" />
                             <TextBlock FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center">
                                 <Run Text="{Binding BatteryCase.Level, Mode=OneWay}" /><Run Text="%" />
@@ -53,7 +61,7 @@
             <StackPanel DockPanel.Dock="Bottom">
                 <TextBlock Text="{Binding Status}" Style="{StaticResource Caption}" Margin="4,0,4,8" />
                 <Button Content="{local:L power.off}" Command="{Binding PowerOffCommand}" HorizontalAlignment="Stretch"
-                        IsEnabled="{Binding IsConnected}" />
+                        IsEnabled="{Binding IsConnected}" Visibility="{Binding Has[PowerOff], Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
 
             <ListBox x:Name="Nav" SelectedIndex="0" BorderThickness="0" Background="Transparent" Margin="0,4"
@@ -76,7 +84,7 @@
                 <StackPanel x:Name="PageSound">
                     <TextBlock Text="{local:L sound.title}" Style="{StaticResource PageTitle}" />
 
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[Playback], Converter={StaticResource BoolToVisibility}}">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Content="⏮" Command="{Binding PreviousCommand}" Width="44" Margin="4,0" ToolTip="{local:L media.prev}" />
@@ -96,12 +104,12 @@
                         </DockPanel>
                     </Border>
 
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[NoiseControl], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <TextBlock Text="{local:L nc.title}" Style="{StaticResource CardTitle}" />
                             <TextBlock Text="{local:L nc.caption}" Style="{StaticResource Caption}" />
                             <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                                <RadioButton Content="{local:L nc.nc}" Margin="0,0,24,0" GroupName="nc"
+                                <RadioButton Content="{local:L nc.nc}" Margin="0,0,24,0" GroupName="nc" Visibility="{Binding Has[NoiseCancelling], Converter={StaticResource BoolToVisibility}}"
                                              IsChecked="{Binding NcMode, Converter={x:Static local:IndexConverter.Instance}, ConverterParameter=0}" />
                                 <RadioButton Content="{local:L nc.ambient}" Margin="0,0,24,0" GroupName="nc"
                                              IsChecked="{Binding NcMode, Converter={x:Static local:IndexConverter.Instance}, ConverterParameter=1}" />
@@ -116,7 +124,7 @@
                                             IsEnabled="{Binding IsManualAmbient}" />
                                 </DockPanel>
                                 <CheckBox Content="{local:L nc.voice}" IsChecked="{Binding VoiceFocus}" Margin="0,12,0,0" />
-                                <DockPanel Margin="0,12,0,0">
+                                <DockPanel Margin="0,12,0,0" Visibility="{Binding Has[AutoAmbient], Converter={StaticResource BoolToVisibility}}">
                                     <ComboBox DockPanel.Dock="Right" Width="200" ItemsSource="{Binding AutoAmbientSensitivities}"
                                               SelectedItem="{Binding SelectedAutoAmbientSensitivity}" IsEnabled="{Binding AutoAmbient}" />
                                     <CheckBox IsChecked="{Binding AutoAmbient}" VerticalAlignment="Center">
@@ -127,7 +135,17 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[SoundLevel], Converter={StaticResource BoolToVisibility}}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding SoundLevel}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <StackPanel>
+                                <TextBlock Text="{local:L level.title}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{local:L level.caption}" Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[SpeakToChat], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <DockPanel>
                                 <CheckBox DockPanel.Dock="Right" IsChecked="{Binding SpeakToChat}" VerticalAlignment="Center" />
@@ -154,7 +172,8 @@
                 <!-- Equalizer -->
                 <StackPanel x:Name="PageEq" Visibility="Collapsed">
                     <TextBlock Text="{local:L eq.title}" Style="{StaticResource PageTitle}" />
-                    <Border Style="{StaticResource Card}">
+                    <TextBlock Text="{local:L page.empty}" Style="{StaticResource Caption}" Visibility="{Binding Has[NoEqualizer], Converter={StaticResource BoolToVisibility}}" />
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[Equalizer], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <DockPanel>
                                 <ComboBox DockPanel.Dock="Right" Width="240" ItemsSource="{Binding EqPresets}" SelectedItem="{Binding SelectedEqPreset}" />
@@ -173,7 +192,7 @@
                                             <TextBlock HorizontalAlignment="Center" FontSize="12" Margin="0,0,0,6">
                                                 <Run Text="{Binding Value, Mode=OneWay, StringFormat={}{0:+0;−0;0}}" />
                                             </TextBlock>
-                                            <Slider Orientation="Vertical" Height="220" Minimum="-6" Maximum="6" HorizontalAlignment="Center"
+                                            <Slider Orientation="Vertical" Height="220" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" HorizontalAlignment="Center"
                                                     Value="{Binding Value}" IsSnapToTickEnabled="True" TickFrequency="1" />
                                             <TextBlock Text="{Binding Label}" Style="{StaticResource Caption}" HorizontalAlignment="Center" Margin="0,6,0,0" />
                                         </StackPanel>
@@ -188,7 +207,8 @@
                 <!-- Sound quality -->
                 <StackPanel x:Name="PageQuality" Visibility="Collapsed">
                     <TextBlock Text="{local:L quality.title}" Style="{StaticResource PageTitle}" />
-                    <Border Style="{StaticResource Card}">
+                    <TextBlock Text="{local:L page.empty}" Style="{StaticResource Caption}" Visibility="{Binding Has[NoQuality], Converter={StaticResource BoolToVisibility}}" />
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[Dsee], Converter={StaticResource BoolToVisibility}}">
                         <DockPanel>
                             <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Dsee}" VerticalAlignment="Center" />
                             <StackPanel>
@@ -197,14 +217,14 @@
                             </StackPanel>
                         </DockPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[Connection], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <TextBlock Text="{local:L quality.connection}" Style="{StaticResource CardTitle}" />
                             <TextBlock Text="{local:L quality.connection.caption}" Style="{StaticResource Caption}" />
                             <ComboBox ItemsSource="{Binding Priorities}" SelectedItem="{Binding SelectedPriority}" Margin="0,12,0,0" HorizontalAlignment="Left" Width="320" />
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[Bgm], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <DockPanel>
                                 <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Bgm}" VerticalAlignment="Center" />
@@ -217,12 +237,31 @@
                                       Visibility="{Binding Bgm, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Border>
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[VoiceBoost], Converter={StaticResource BoolToVisibility}}">
+                        <DockPanel>
+                            <CheckBox DockPanel.Dock="Right" IsChecked="{Binding VoiceBoost}" VerticalAlignment="Center" />
+                            <StackPanel>
+                                <TextBlock Text="{local:L quality.voiceboost}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{local:L quality.voiceboost.caption}" Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[Leakage], Converter={StaticResource BoolToVisibility}}">
+                        <DockPanel>
+                            <CheckBox DockPanel.Dock="Right" IsChecked="{Binding LeakageReduction}" VerticalAlignment="Center" />
+                            <StackPanel>
+                                <TextBlock Text="{local:L quality.leakage}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{local:L quality.leakage.caption}" Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
                 </StackPanel>
 
                 <!-- Touch -->
                 <StackPanel x:Name="PageTouch" Visibility="Collapsed">
                     <TextBlock Text="{local:L touch.title}" Style="{StaticResource PageTitle}" />
-                    <Border Style="{StaticResource Card}">
+                    <TextBlock Text="{local:L page.empty}" Style="{StaticResource Caption}" Visibility="{Binding Has[NoTouch], Converter={StaticResource BoolToVisibility}}" />
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[TouchPresets], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <TextBlock Text="{local:L touch.left}" Style="{StaticResource CardTitle}" />
                             <ComboBox ItemsSource="{Binding TouchLeftOptions}" SelectedItem="{Binding SelectedTouchLeft}" Margin="0,8,0,0" HorizontalAlignment="Left" Width="320" />
@@ -238,7 +277,7 @@
                             </ItemsControl>
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[TouchPresets], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <TextBlock Text="{local:L touch.right}" Style="{StaticResource CardTitle}" />
                             <ComboBox ItemsSource="{Binding TouchRightOptions}" SelectedItem="{Binding SelectedTouchRight}" Margin="0,8,0,0" HorizontalAlignment="Left" Width="320" />
@@ -268,7 +307,7 @@
                             </DockPanel>
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[HeadGestures], Converter={StaticResource BoolToVisibility}}">
                         <DockPanel>
                             <CheckBox DockPanel.Dock="Right" IsChecked="{Binding HeadGestures}" VerticalAlignment="Center" />
                             <StackPanel>
@@ -284,38 +323,59 @@
                     <TextBlock Text="{local:L settings.title}" Style="{StaticResource PageTitle}" />
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
-                            <DockPanel Style="{StaticResource Row}">
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[Multipoint], Converter={StaticResource BoolToVisibility}}">
                                 <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Multipoint}" VerticalAlignment="Center" />
                                 <StackPanel>
                                     <TextBlock Text="{local:L settings.multipoint}" />
                                     <TextBlock Text="{local:L settings.multipoint.caption}" Style="{StaticResource Caption}" />
                                 </StackPanel>
                             </DockPanel>
-                            <DockPanel Style="{StaticResource Row}">
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[OneSideNc], Converter={StaticResource BoolToVisibility}}">
                                 <CheckBox DockPanel.Dock="Right" IsChecked="{Binding OneSideNc}" VerticalAlignment="Center" />
                                 <StackPanel>
                                     <TextBlock Text="{local:L settings.onesided}" />
                                     <TextBlock Text="{local:L settings.onesided.caption}" Style="{StaticResource Caption}" />
                                 </StackPanel>
                             </DockPanel>
-                            <DockPanel Style="{StaticResource Row}">
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[Sidetone], Converter={StaticResource BoolToVisibility}}">
                                 <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Sidetone}" VerticalAlignment="Center" />
                                 <StackPanel>
                                     <TextBlock Text="{local:L settings.sidetone}" />
                                     <TextBlock Text="{local:L settings.sidetone.caption}" Style="{StaticResource Caption}" />
                                 </StackPanel>
                             </DockPanel>
-                            <DockPanel Style="{StaticResource Row}">
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[PauseWhenRemoved], Converter={StaticResource BoolToVisibility}}">
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding PauseWhenRemoved}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L settings.pause}" />
+                                    <TextBlock Text="{local:L settings.pause.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding OtherSettings}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Style="{StaticResource Row}">
+                                            <CheckBox DockPanel.Dock="Right" IsChecked="{Binding IsOn}" VerticalAlignment="Center"
+                                                      Visibility="{Binding IsSwitch, Converter={StaticResource BoolToVisibility}}" />
+                                            <ComboBox DockPanel.Dock="Right" Width="240" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}"
+                                                      Visibility="{Binding IsList, Converter={StaticResource BoolToVisibility}}" />
+                                            <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[VoiceGuidance], Converter={StaticResource BoolToVisibility}}">
                                 <CheckBox DockPanel.Dock="Right" IsChecked="{Binding VoiceGuidance}" VerticalAlignment="Center" />
                                 <TextBlock Text="{local:L settings.guidance}" VerticalAlignment="Center" />
                             </DockPanel>
-                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding VoiceGuidance, Converter={StaticResource BoolToVisibility}}">
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding VoiceGuidance, Converter={StaticResource BoolToVisibility}}"
+                                       IsEnabled="{Binding Has[VoiceGuidanceVolume]}">
                                 <TextBlock DockPanel.Dock="Right" Text="{Binding VoiceGuidanceVolume, StringFormat={}{0:+0;−0;0}}" Width="28" TextAlignment="Right" VerticalAlignment="Center" />
                                 <Slider DockPanel.Dock="Right" Width="240" Minimum="-2" Maximum="2" Value="{Binding VoiceGuidanceVolume}"
                                         IsSnapToTickEnabled="True" TickFrequency="1" Margin="12,0" />
                                 <TextBlock Text="{local:L settings.guidance.volume}" VerticalAlignment="Center" />
                             </DockPanel>
-                            <DockPanel Style="{StaticResource Row}">
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[VoiceAssistant], Converter={StaticResource BoolToVisibility}}">
                                 <ComboBox DockPanel.Dock="Right" Width="360" ItemsSource="{Binding VoiceAssistantOptions}" SelectedItem="{Binding SelectedVoiceAssistant}" />
                                 <TextBlock Text="{local:L settings.assistant}" VerticalAlignment="Center" />
                             </DockPanel>
@@ -328,7 +388,7 @@
                             </DockPanel>
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[FitTest], Converter={StaticResource BoolToVisibility}}">
                         <DockPanel>
                             <Button DockPanel.Dock="Right" Command="{Binding FitTestCommand}" VerticalAlignment="Center" MinWidth="150">
                                 <Button.Style>
@@ -348,14 +408,14 @@
                             </StackPanel>
                         </DockPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[BatterySettings], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <TextBlock Text="{local:L battery.title}" Style="{StaticResource CardTitle}" />
-                            <DockPanel Style="{StaticResource Row}">
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[AutoPowerOff], Converter={StaticResource BoolToVisibility}}">
                                 <ComboBox DockPanel.Dock="Right" Width="300" ItemsSource="{Binding AutoPowerOffOptions}" SelectedItem="{Binding SelectedAutoPowerOff}" />
                                 <TextBlock Text="{local:L battery.autooff}" VerticalAlignment="Center" />
                             </DockPanel>
-                            <DockPanel Style="{StaticResource Row}">
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[CaringCharge], Converter={StaticResource BoolToVisibility}}">
                                 <CheckBox DockPanel.Dock="Right" IsChecked="{Binding CaringCharge}" VerticalAlignment="Center" />
                                 <StackPanel>
                                     <TextBlock Text="{local:L battery.caring}" />
@@ -369,7 +429,8 @@
                 <!-- Devices -->
                 <StackPanel x:Name="PageDevices" Visibility="Collapsed">
                     <TextBlock Text="{local:L devices.title}" Style="{StaticResource PageTitle}" />
-                    <Border Style="{StaticResource Card}">
+                    <TextBlock Text="{local:L page.empty}" Style="{StaticResource Caption}" Visibility="{Binding Has[NoDevices], Converter={StaticResource BoolToVisibility}}" />
+                    <Border Style="{StaticResource Card}" Visibility="{Binding Has[Devices], Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="{local:L devices.add}" Command="{Binding PairingModeCommand}" VerticalAlignment="Center" />

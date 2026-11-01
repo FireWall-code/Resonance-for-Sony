@@ -26,6 +26,15 @@ different feature variants. To help support yours:
 If you can build from source, `resonance-cli test` changes each supported setting, waits for the
 headphones' confirmation, then restores it, and prints a PASS / FAIL report.
 
+### Check a recorded session without the headphones
+
+A recorded session is a folder of `.bin` files, one MDR frame each (the format of
+[SonyHeadphonesClient's captures](https://github.com/mos9527/SonyHeadphonesClient/tree/main/tests)).
+
+- `resonance-cli replay <folder>` prints the state Resonance decodes from it, as JSON.
+- `Resonance.exe --replay <folder>` opens the app on that session: every page shows what that model
+  supports, and changes are refused. Quit the running Resonance first.
+
 ## Report a bug
 
 Include your headphones model and firmware, your Windows version, what you did and what happened.

@@ -16,22 +16,29 @@ que sur téléphone. Resonance apporte ses réglages à Windows 10 et 11, sans �
 ## Fonctionnalités
 
 - **Contrôle du bruit** : réduction de bruit, son ambiant (niveau 1 à 20, voix, mode automatique), désactivé
-- **Égaliseur 10 bandes** avec préréglages et courbe personnalisée
-- **Batterie** de chaque écouteur et du boîtier, codec (LDAC / AAC / SBC), morceau en cours, volume
-- **Audio** : DSEE Extreme, priorité de connexion, musique de fond
+- **Égaliseur** avec préréglages et courbe personnalisée : 10 bandes, ou Clear Bass + 5 bandes, selon le modèle
+- **Batterie** de chaque écouteur et du boîtier (ou du casque), codec (LDAC / AAC / SBC), morceau en cours, volume
+- **Niveau sonore** : le niveau mesuré en direct par le casque pendant la lecture (écoute sécurisée)
+- **Audio** : DSEE Extreme, priorité de connexion, musique de fond, amplification de la voix, réduction des fuites sonores
 - **Détection de conversation** avec sensibilité et délai
 - **Commandes tactiles** : preset par écouteur, gestes, accès rapide, gestes de la tête
 - **Appareils** : voir, connecter, déconnecter, oublier et basculer entre les appareils (multipoint)
-- **Paramètres** : extinction auto, recharge douce, retour de voix, guidage vocal, assistant vocal, test des embouts
+- **Paramètres** : extinction auto, recharge douce, retour de voix, pause au retrait, guidage vocal, assistant vocal,
+  test des embouts, et tout réglage propre au modèle que le casque décrit lui-même (sensibilité du toucher…)
 - **Bonus Windows** : icône dans la zone de notification (un clic change le mode), raccourcis clavier globaux,
   démarrage avec Windows, ligne de commande scriptable, thème clair / sombre, anglais et français
 
 ## Casques pris en charge
 
+Resonance demande au casque quelles fonctions il gère et n'affiche que celles-là, dans le format propre à
+chaque modèle (variantes de réduction de bruit, d'égaliseur, de batterie et de mode d'écoute).
+
 | Modèle | État |
 |---|---|
 | WF-1000XM6 | Entièrement testé (chaque réglage vérifié sur le casque) |
-| Autres casques Sound Connect (WF-1000XM5, WH-1000XM5/XM6, LinkBuds…) | Connexion attendue, fonctions variables. [Aidez à ajouter le vôtre](CONTRIBUTING.md#add-support-for-your-headphones) |
+| WF-1000XM5, LinkBuds Clip | Toutes les pages vérifiées sur des sessions enregistrées ; modification des réglages pas encore confirmée par un propriétaire |
+| Autres casques Sound Connect (WH-1000XM5/XM6, WF-C700N, LinkBuds…) | Devraient fonctionner : même protocole et mêmes variantes. [Aidez à confirmer le vôtre](CONTRIBUTING.md#add-support-for-your-headphones) |
+| Anciens modèles (WH-1000XM3/XM4, WF-1000XM3/XM4) | Pas encore : ils utilisent la première version du protocole |
 
 ## Installation
 
@@ -61,6 +68,12 @@ Les noms anglais (`status`, `ambient`, `toggle`…) fonctionnent aussi.
 
 Le reste de la documentation (fonctionnement, compilation, contribution) est en anglais dans le
 [README principal](README.md).
+
+## Remerciements
+
+Les variantes des autres modèles ont été vérifiées sur les sessions enregistrées et les notes de
+[mos9527/SonyHeadphonesClient](https://github.com/mos9527/SonyHeadphonesClient) (MIT), le travail open source
+le plus complet sur ces casques.
 
 ## Avertissement
 

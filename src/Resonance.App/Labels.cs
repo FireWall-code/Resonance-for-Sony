@@ -117,6 +117,35 @@ public static class Labels
         _ => "",
     };
 
+    public static string Of(SoundPressure p) => p.Decibels is { } db ? T("level.db", db) : p.Reason switch
+    {
+        SoundPressureReason.InCall => T("level.call"),
+        SoundPressureReason.Detached => T("level.detached"),
+        _ => T("level.none"),
+    };
+
+    /// <summary>
+    /// Name of a self-described setting: a translation when Resonance knows it ("gs.TAP_SENSITIVITY_SETTING"),
+    /// otherwise the identifier made readable ("TOUCH_PANEL_SETTING" → "Touch panel").
+    /// </summary>
+    public static string GeneralSettingName(string name) =>
+        TryT($"gs.{name}") ?? Readable(name.EndsWith("_SETTING") ? name[..^"_SETTING".Length] : name);
+
+    /// <summary>Choice of a list setting: "TAP_SENSITIVITY_SETTING_ELEM_LOW" → "gs.elem.LOW" or "Low".</summary>
+    public static string GeneralSettingChoice(string setting, string choice)
+    {
+        var elem = choice.StartsWith(setting + "_ELEM_") ? choice[(setting.Length + "_ELEM_".Length)..] : choice;
+        return TryT($"gs.elem.{elem}") ?? Readable(elem);
+    }
+
+    private static string? TryT(string key) => T(key) is var text && text != key ? text : null;
+
+    private static string Readable(string id)
+    {
+        var words = id.Replace('_', ' ').Trim().ToLowerInvariant();
+        return words.Length == 0 ? id : char.ToUpperInvariant(words[0]) + words[1..];
+    }
+
     public static Option<NoiseAdaptiveSensitivity>[] AutoAmbientSensitivities { get; } =
     [
         new(NoiseAdaptiveSensitivity.Standard, T("sens.standard")), new(NoiseAdaptiveSensitivity.High, T("sens.high")),

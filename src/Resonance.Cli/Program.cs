@@ -10,8 +10,14 @@ Console.OutputEncoding = System.Text.Encoding.UTF8;
 // resonance-cli scan [address]          query every supported function (GET capability/status/param)
 // resonance-cli send <1|2> <hex> [address]
 // resonance-cli listen [address]        print notifications until Ctrl+C
+// resonance-cli replay <folder>         state decoded from a recorded session (one frame per .bin file)
 string[] toolCommands = ["list", "scan", "deepscan", "send", "listen", "test", "device", "state"];
 var cmd = args.Length > 0 ? args[0] : "etat";
+if (cmd == "replay")
+{
+    Console.WriteLine(Replay.Run(args.ElementAtOrDefault(1) ?? "."));
+    return;
+}
 if (!toolCommands.Contains(cmd))
 {
     Environment.ExitCode = await UserCommand.RunAsync(args);
