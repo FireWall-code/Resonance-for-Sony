@@ -165,6 +165,9 @@ public sealed class MainViewModel : ObservableObject
         PreviousCommand = new RelayCommand(() => Send(hp => hp.SendPlaybackAsync(PlaybackControl.Previous)));
         PowerOffCommand = new RelayCommand(PowerOffAsync);
         ReconnectCommand = new RelayCommand(() => ConnectLoopAsync());
+        var idleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        idleTimer.Tick += async (_, _) => await CheckIdleAsync();
+        idleTimer.Start();
         // The sound level is only worth asking for while someone can see it.
         var levelTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         levelTimer.Tick += async (_, _) => { if (Application.Current.MainWindow is { IsVisible: true }) await RefreshSoundLevelAsync(); };
@@ -195,7 +198,7 @@ public sealed class MainViewModel : ObservableObject
         if (Interlocked.Exchange(ref _connecting, 1) == 1) return;
         try
         {
-            while (!_closing && _hp is null)
+            while (!_closing && _hp is null && !_paused && !_idle)
             {
                 try
                 {
@@ -219,6 +222,7 @@ public sealed class MainViewModel : ObservableObject
                         hp.Disconnected += _ => _ui.BeginInvoke(OnDisconnected);
                         _hp = hp;
                         IsConnected = true;
+                        Touch();
                         Status = T("status.connected");
                         _ui.Invoke(Sync);
                         _ui.Invoke(() => Connected?.Invoke());
@@ -246,6 +250,7 @@ public sealed class MainViewModel : ObservableObject
 
     private async void OnDisconnected()
     {
+        if (_paused || _idle) return; // released on purpose
         var hp = _hp;
         _hp = null;
         IsConnected = false;
@@ -265,6 +270,7 @@ public sealed class MainViewModel : ObservableObject
     private async Task Send(Func<Headphones, Task> action)
     {
         if (_loading || _hp is not { } hp) return;
+        Touch();
         try { await action(hp); }
         catch (Exception ex) { _ui.Invoke(() => Status = T("status.rejected", ex.Message)); }
     }
@@ -479,14 +485,118 @@ public sealed class MainViewModel : ObservableObject
         _ = Send(hp => hp.SetNoiseControlAsync(next));
     }
 
-    private void OnHotkey(string action)
+    private async void OnHotkey(string action)
     {
-        if (!IsConnected) { Status = T("status.hotkeyignored"); return; }
+        // Released while idle: take the headphones back first (about a second).
+        if (!IsConnected && !await EnsureConnectedAsync(TimeSpan.FromSeconds(10))) { Status = T("status.hotkeyignored"); return; }
         NcMode = action switch { "nc" => 0, "ambient" => 1, "off" => 2, _ => (NcMode + 1) % 3 };
     }
 
     /// <summary>Tray shortcut: cycles noise cancelling → ambient → off.</summary>
-    public void CycleNoiseMode() => NcMode = (NcMode + 1) % 3;
+    public async void CycleNoiseMode()
+    {
+        if (!IsConnected && !await EnsureConnectedAsync(TimeSpan.FromSeconds(10))) return;
+        NcMode = (NcMode + 1) % 3;
+    }
+
+    // ------------------------------------------------------------ sharing the headphones with the phone
+
+    // The headphones accept one control connection: while Resonance holds it, Sound Connect cannot connect.
+    private bool _paused, _idle;
+    private DateTime _lastActivity = DateTime.UtcNow;
+
+    /// <summary>The user let the phone take over; Resonance stays away until <see cref="ResumeAsync"/>.</summary>
+    public bool IsPaused { get => _paused; private set { if (SetField(ref _paused, value)) Raise(nameof(IsReleased)); } }
+    /// <summary>Released after a while without use; any use connects again.</summary>
+    public bool IsIdle { get => _idle; private set { if (SetField(ref _idle, value)) Raise(nameof(IsReleased)); } }
+    public bool IsReleased => _paused || _idle;
+
+    public bool ReleaseWhenIdle
+    {
+        get => _settings.ReleaseWhenIdle;
+        set { if (_settings.ReleaseWhenIdle == value) return; _settings.ReleaseWhenIdle = value; _settings.Save(); Raise(); Touch(); }
+    }
+
+    public static IReadOnlyList<Option<int>> IdleDelays { get; } =
+        [new(1, T("share.minutes", 1)), new(3, T("share.minutes", 3)), new(5, T("share.minutes", 5)), new(10, T("share.minutes", 10))];
+
+    public Option<int>? SelectedIdleDelay
+    {
+        get => IdleDelays.FirstOrDefault(d => d.Value == _settings.IdleMinutes) ?? IdleDelays[1];
+        set { if (value is null) return; _settings.IdleMinutes = value.Value; _settings.Save(); Raise(); }
+    }
+
+    /// <summary>Notes that Resonance is in use (window, shortcut, command, change), which delays the idle release.</summary>
+    public void Touch() => _lastActivity = DateTime.UtcNow;
+
+    public ICommand PauseCommand => new RelayCommand(PauseAsync);
+    public ICommand ResumeCommand => new RelayCommand(ResumeAsync);
+
+    /// <summary>Lets the phone take over until the user resumes.</summary>
+    public async Task PauseAsync()
+    {
+        IsPaused = true;
+        IsIdle = false;
+        await ReleaseAsync();
+        Status = T("status.paused");
+    }
+
+    public async Task ResumeAsync()
+    {
+        IsPaused = false;
+        IsIdle = false;
+        Touch();
+        await ConnectLoopAsync();
+    }
+
+    /// <summary>
+    /// Connects again if Resonance released the headphones while idle. False when the user paused it, or when
+    /// the headphones could not be reached in time (the phone may hold them).
+    /// </summary>
+    public async Task<bool> EnsureConnectedAsync(TimeSpan timeout)
+    {
+        Touch();
+        if (_hp is not null) return true;
+        if (_paused) return false;
+        if (_idle)
+        {
+            _quietConnect = true;
+            IsIdle = false;
+        }
+        _ = _ui.InvokeAsync(ConnectLoopAsync);
+        var deadline = DateTime.UtcNow + timeout;
+        while (_hp is null && DateTime.UtcNow < deadline) await Task.Delay(100);
+        return _hp is not null;
+    }
+
+    private bool _quietConnect;
+
+    /// <summary>True when the last connection only took the headphones back after an idle release (no card).</summary>
+    public bool TakeQuietConnect()
+    {
+        bool quiet = _quietConnect;
+        _quietConnect = false;
+        return quiet;
+    }
+
+    /// <summary>Called every 30 s: frees the headphones when nobody used Resonance for a while.</summary>
+    private async Task CheckIdleAsync()
+    {
+        if (!_settings.ReleaseWhenIdle || _hp is null || _paused || _idle || _hp.IsRecording) return;
+        if (Application.Current.MainWindow is { IsVisible: true, IsActive: true }) { Touch(); return; }
+        if (DateTime.UtcNow - _lastActivity < TimeSpan.FromMinutes(_settings.IdleMinutes)) return;
+        IsIdle = true;
+        await ReleaseAsync();
+        Status = T("status.idle");
+    }
+
+    private async Task ReleaseAsync()
+    {
+        var hp = _hp;
+        _hp = null;
+        IsConnected = false;
+        if (hp is not null && !hp.IsRecording) await hp.DisposeAsync();
+    }
 
     // ------------------------------------------------------------ appearance: illustration and connection card
 

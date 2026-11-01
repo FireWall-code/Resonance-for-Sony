@@ -13,7 +13,7 @@ public partial class App : Application
     private Forms.NotifyIcon? _tray;
     private MainWindow? _window;
     private MainViewModel? _vm;
-    private Forms.ToolStripMenuItem? _ncItem, _ambientItem, _offItem;
+    private Forms.ToolStripMenuItem? _ncItem, _ambientItem, _offItem, _shareItem;
 
     private readonly CancellationTokenSource _pipeCts = new();
 
@@ -29,9 +29,14 @@ public partial class App : Application
         _window = new MainWindow { DataContext = _vm };
         CreateTray();
         _vm.DeviceStateChanged += UpdateTray;
-        _vm.Connected += () => { if (_vm.ShowConnectionCard) ShowConnectionCard(force: false); };
+        _vm.Connected += () => { if (!_vm.TakeQuietConnect() && _vm.ShowConnectionCard) ShowConnectionCard(force: false); };
         _vm.CardRequested += () => ShowConnectionCard(force: true);
-        _vm.PropertyChanged += (_, a) => { if (a.PropertyName is nameof(MainViewModel.Status) or nameof(MainViewModel.IsConnected)) UpdateTray(); };
+        _vm.PropertyChanged += (_, a) =>
+        {
+            if (a.PropertyName is nameof(MainViewModel.Status) or nameof(MainViewModel.IsConnected) or nameof(MainViewModel.IsPaused))
+                UpdateTray();
+        };
+        _window.Activated += (_, _) => { if (_vm.IsIdle) _ = _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(10)); else _vm.Touch(); };
 
         // "--background" starts hidden in the tray (for the Windows startup entry).
         if (!e.Args.Contains("--background")) _window.Show();
@@ -51,8 +56,24 @@ public partial class App : Application
         // Documentation screenshots, rendered off-screen: resonance-cli __screenshot <folder>
         if (args.FirstOrDefault() == "__screenshot")
             return CommandResult.Done(await Dispatcher.InvokeAsync(() => _window!.RenderPages(args.ElementAtOrDefault(1) ?? ".")));
-        if (_vm?.Device is not { } hp) return CommandResult.Waiting(T("cli.notconnected", _vm?.Status));
-        return await CommandRunner.RunAsync(hp, args);
+        if (_vm is null) return CommandResult.Waiting(T("cli.notconnected", ""));
+        // resonance-cli release / resume: hand the headphones to the phone app and take them back.
+        switch (args.FirstOrDefault()?.ToLowerInvariant())
+        {
+            case "release" or "liberer" or "libérer":
+                await Dispatcher.InvokeAsync(_vm.PauseAsync).Task.Unwrap();
+                return CommandResult.Done(T("status.paused"));
+            case "resume" or "reprendre":
+                await Dispatcher.InvokeAsync(() => { _ = _vm.ResumeAsync(); });
+                return await _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(12))
+                    ? CommandResult.Done(T("status.connected")) : CommandResult.Waiting(T("cli.notconnected", _vm.Status));
+        }
+        if (_vm.IsPaused) return CommandResult.Fail(T("cli.paused"));
+        // Released while idle: take the headphones back for this command.
+        if (_vm.Device is null && !await _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(12)))
+            return CommandResult.Waiting(T("cli.notconnected", _vm.Status));
+        _vm.Touch();
+        return await CommandRunner.RunAsync(_vm.Device!, args);
     }
 
     private void CreateTray()
@@ -60,10 +81,16 @@ public partial class App : Application
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add(T("tray.open"), null, (_, _) => ShowWindow());
         menu.Items.Add(new Forms.ToolStripSeparator());
-        _ncItem = new(T("nc.nc"), null, (_, _) => _vm!.NcMode = 0);
-        _ambientItem = new(T("nc.ambient"), null, (_, _) => _vm!.NcMode = 1);
-        _offItem = new(T("nc.off"), null, (_, _) => _vm!.NcMode = 2);
+        _ncItem = new(T("nc.nc"), null, async (_, _) => await SetModeAsync(0));
+        _ambientItem = new(T("nc.ambient"), null, async (_, _) => await SetModeAsync(1));
+        _offItem = new(T("nc.off"), null, async (_, _) => await SetModeAsync(2));
         menu.Items.AddRange([_ncItem, _ambientItem, _offItem]);
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        _shareItem = new(T("share.pause"), null, async (_, _) =>
+        {
+            if (_vm!.IsPaused) await _vm.ResumeAsync(); else await _vm.PauseAsync();
+        });
+        menu.Items.Add(_shareItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(T("tray.quit"), null, async (_, _) => await QuitAsync());
 
@@ -90,7 +117,9 @@ public partial class App : Application
         _ncItem!.Checked = _vm.NcMode == 0;
         _ambientItem!.Checked = _vm.NcMode == 1;
         _offItem!.Checked = _vm.NcMode == 2;
-        foreach (var item in new[] { _ncItem, _ambientItem, _offItem }) item.Enabled = _vm.IsConnected;
+        // Released while idle, the noise items still work: they take the headphones back.
+        foreach (var item in new[] { _ncItem, _ambientItem, _offItem }) item.Enabled = _vm.IsConnected || _vm.IsIdle;
+        _shareItem!.Text = _vm.IsPaused ? T("share.resume") : T("share.pause");
     }
 
     private DateTime _lastCard = DateTime.MinValue;
@@ -110,8 +139,16 @@ public partial class App : Application
         _card.Show();
     }
 
+    private async Task SetModeAsync(int mode)
+    {
+        if (_vm is null || (!_vm.IsConnected && !await _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(10)))) return;
+        _vm.NcMode = mode;
+    }
+
     public void ShowWindow()
     {
+        // Opening the window means Resonance is in use: take the headphones back if it released them.
+        if (_vm is { IsIdle: true }) _ = _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(10));
         _window!.Show();
         if (_window.WindowState == WindowState.Minimized) _window.WindowState = WindowState.Normal;
         _window.Activate();

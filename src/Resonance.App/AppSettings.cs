@@ -17,6 +17,13 @@ public sealed class AppSettings
     /// <summary>"auto" (Windows display language) or a language code such as "en" or "fr".</summary>
     public string Language { get; set; } = "auto";
 
+    /// <summary>
+    /// Disconnect from the headphones when Resonance has not been used for <see cref="IdleMinutes"/>, so the
+    /// phone app can connect (the headphones accept one control connection at a time).
+    /// </summary>
+    public bool ReleaseWhenIdle { get; set; } = true;
+    public int IdleMinutes { get; set; } = 3;
+
     /// <summary>Show the animated card above the notification area when headphones connect.</summary>
     public bool ShowConnectionCard { get; set; } = true;
 

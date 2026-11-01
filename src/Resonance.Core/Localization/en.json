@@ -336,5 +336,16 @@
  "appearance.picture.caption": "A drawing in their colour, or your own photo.",
  "appearance.choose": "Choose a photo…",
  "appearance.drawing": "Use the drawing",
- "appearance.filter": "Images"
+ "appearance.filter": "Images",
+ "status.paused": "Headphones left to your phone",
+ "status.idle": "Idle: headphones free for your phone",
+ "share.title": "Sharing with your phone",
+ "share.idle": "Free the headphones when Resonance is not in use",
+ "share.idle.caption": "The headphones accept one app at a time: Sound Connect can then connect from your phone. Resonance takes them back as soon as you use it (window, shortcut, command line).",
+ "share.minutes": "after {0} min",
+ "share.now": "Use Sound Connect now",
+ "share.now.caption": "Resonance lets go of the headphones until you take them back.",
+ "share.pause": "Let the phone take over",
+ "share.resume": "Take back control",
+ "cli.paused": "Resonance has left the headphones to your phone. Click “Take back control” in Resonance."
 }

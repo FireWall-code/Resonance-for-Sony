@@ -63,6 +63,8 @@
 
             <StackPanel DockPanel.Dock="Bottom">
                 <TextBlock Text="{Binding Status}" Style="{StaticResource Caption}" Margin="4,0,4,8" />
+                <Button Content="{local:L share.resume}" Command="{Binding ResumeCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                        Visibility="{Binding IsPaused, Converter={StaticResource BoolToVisibility}}" />
                 <Button Content="{local:L power.off}" Command="{Binding PowerOffCommand}" HorizontalAlignment="Stretch"
                         IsEnabled="{Binding IsConnected}" Visibility="{Binding Has[PowerOff], Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
@@ -387,6 +389,29 @@
                                 <StackPanel>
                                     <TextBlock Text="{local:L settings.language}" />
                                     <TextBlock Text="{local:L settings.language.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L share.title}" Style="{StaticResource CardTitle}" />
+                            <DockPanel Style="{StaticResource Row}">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ComboBox Width="110" ItemsSource="{x:Static local:MainViewModel.IdleDelays}" SelectedItem="{Binding SelectedIdleDelay}"
+                                              IsEnabled="{Binding ReleaseWhenIdle}" Margin="0,0,12,0" />
+                                    <CheckBox IsChecked="{Binding ReleaseWhenIdle}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{local:L share.idle}" />
+                                    <TextBlock Text="{local:L share.idle.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <Button DockPanel.Dock="Right" Content="{local:L share.pause}" Command="{Binding PauseCommand}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L share.now}" />
+                                    <TextBlock Text="{local:L share.now.caption}" Style="{StaticResource Caption}" />
                                 </StackPanel>
                             </DockPanel>
                         </StackPanel>

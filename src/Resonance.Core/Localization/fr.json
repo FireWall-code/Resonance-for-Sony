@@ -336,5 +336,16 @@
  "appearance.picture.caption": "Un dessin à leur couleur, ou votre propre photo.",
  "appearance.choose": "Choisir une photo…",
  "appearance.drawing": "Utiliser le dessin",
- "appearance.filter": "Images"
+ "appearance.filter": "Images",
+ "status.paused": "Casque laissé au téléphone",
+ "status.idle": "En veille : casque libre pour le téléphone",
+ "share.title": "Partage avec le téléphone",
+ "share.idle": "Libérer le casque quand Resonance ne sert pas",
+ "share.idle.caption": "Le casque n'accepte qu'une appli à la fois : Sound Connect peut alors s'y connecter depuis votre téléphone. Resonance reprend la main dès que vous l'utilisez (fenêtre, raccourci, ligne de commande).",
+ "share.minutes": "après {0} min",
+ "share.now": "Utiliser Sound Connect maintenant",
+ "share.now.caption": "Resonance lâche le casque jusqu'à ce que vous le repreniez.",
+ "share.pause": "Laisser la main au téléphone",
+ "share.resume": "Reprendre la main",
+ "cli.paused": "Resonance a laissé le casque au téléphone. Cliquez sur « Reprendre la main » dans Resonance."
 }
