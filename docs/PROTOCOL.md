@@ -130,6 +130,31 @@ headphones that do not answer get the WF-1000XM6 command set.
 type `00`-`03`. `5A <type>` returns `5B <type> <level dB, FF none> <reason 00 not playing / 01 call /
 02 not worn>`. The headphones only answer on request.
 
+## 4c. First protocol version (v1)
+
+Models such as the WH-1000XM3/XM4 and WF-1000XM3/XM4 expose service `96CC203E-5068-46AD-B32D-E316F5E069BA`
+and answer `CONNECT_RET_PROTOCOL_INFO` with a 2-byte version. Framing and the `+0…+D` group layout are the
+same as v2, with these differences:
+
+- `CONNECT_RET_SUPPORT_FUNCTION` lists one byte per function (no priority): `11` battery, `13` codec,
+  `15` L/R battery, `18` case battery, `21` power off, `51` preset EQ, `61`/`62`/`63` NC / NC+ambient /
+  ambient, `A1` playback, `D1`-`D3` general settings, `E1` connection mode, `E2` DSEE, `F3` pause when
+  removed, `F4` auto power off, `F5` speak-to-chat.
+- The common group uses fixed codes: battery `10 <00 single / 01 L-R / 02 case>` → `11`/`13`
+  `<level> <01 charging>…`; DSEE indicator `14 00` → `15`/`17`; codec `18 00` → `19`/`1B <codec>`;
+  power off `22 00 01`.
+- On/off values use `01` for on (v2 uses `00`).
+- Noise control `66 02` → `67 02 <effect> <nc type> <nc 00 off / 01 single / 02 dual> <asm type> <voice> <level>`;
+  noise cancelling is `nc = 02`, ambient sound is `nc = 00` with the level.
+- Equalizer inquired type `01`; bands are `(<info type> <u16>)×n` with `10 00 01` for Clear Bass.
+- Audio `E6 01` connection `<type> <00 sound / 01 stable>`, `E6 02` DSEE `<type> <00 off / 01 auto>`.
+- System `F6 03` pause when removed, `F6 04` auto power off `<type> <active> <selected>` (capability `F1 04`
+  lists the choices), `F6 05` speak-to-chat.
+- Playback `A6 01` answers `A7 01 <data type> …`: `00`-`02` title / album / artist as
+  `<status> <len> <text>`, `20` volume as `<value>`; volume is set with `A8 01 20 <value>`.
+- General settings: `D1 <slot> <format> <len> <name> <len> <summary> <type 01 switch / 02 list>
+  [<n> choices]` (the type comes after the strings), and `D7 <slot> <type> <value>`.
+
 ## 5. Observed behaviour
 
 - **Noise cancelling mode**: the headphones ignore the ambient level, voice focus and auto ambient

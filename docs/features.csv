@@ -6,6 +6,9 @@ Over-ear single battery,status,must,yes,yes,From recordings only
 Pause when removed,settings,should,yes,yes,"Read on WF-1000XM6, not round-trip tested"
 Voice boost / sound leakage reduction,quality,could,yes,yes,LinkBuds; from recordings only
 Self-described general settings,settings,should,yes,yes,"Generic switch / list, e.g. tap sensitivity"
+Protocol v1 models (WH-1000XM3/XM4…),connection,must,yes,yes,"Checked with a WH-1000XM3 recording; no voice guidance or devices yet"
+Headphones illustration in their colour,windows,could,partial,yes,"Original drawings (earbuds / over-ear), or the user's photo; no Sony product images"
+Animated connection card,windows,could,no,yes,Battery rings above the notification area; Preview button in Settings
 Battery left / right / case,status,must,yes,yes,
 Codec indicator,status,should,yes,yes,LDAC / AAC / SBC / LC3
 Firmware version,status,could,yes,yes,

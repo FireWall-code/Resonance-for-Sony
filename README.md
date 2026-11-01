@@ -28,6 +28,10 @@ phones. Resonance brings its settings to Windows 10 and 11, with no emulator and
   earbud fit test, plus any model-specific setting the headphones describe themselves (tap sensitivity…)
 - **Windows-only extras**: notification area icon (click to cycle noise modes), global keyboard shortcuts,
   start with Windows, a scriptable command line, light / dark theme, English and French
+- **Your headphones on screen**: a drawing of your model in its colour (or your own photo), and an animated
+  card with the battery levels above the notification area when they connect
+
+![Connection card](docs/images/card.png)
 
 ## Screenshots
 
@@ -46,8 +50,8 @@ model uses (noise control, equalizer, battery and listening mode variants).
 |---|---|
 | WF-1000XM6 | Fully tested (every setting verified on the device) |
 | WF-1000XM5, LinkBuds Clip | Every page checked against recorded sessions; changing settings not yet confirmed by an owner |
-| Other Sound Connect headphones (WH-1000XM5/XM6, WF-C700N, LinkBuds…) | Should work: same protocol and variants. [Help confirm yours](CONTRIBUTING.md#add-support-for-your-headphones) |
-| Older models (WH-1000XM3/XM4, WF-1000XM3/XM4) | Not yet: they use the first version of the protocol |
+| WH-1000XM3 | First protocol version: checked against a recorded session (battery, noise control, equalizer, DSEE, connection, auto power off, NC/AMBIENT button, touch panel, volume) |
+| Other Sound Connect and Headphones Connect models (WH-1000XM4/XM5/XM6, WF-1000XM4, WF-C700N, LinkBuds…) | Should work: same protocols and variants. [Help confirm yours](CONTRIBUTING.md#add-support-for-your-headphones) |
 
 ## Install
 

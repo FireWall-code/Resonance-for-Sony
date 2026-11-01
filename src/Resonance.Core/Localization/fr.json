@@ -322,5 +322,19 @@
  "gs.elem.OFF": "Désactivé",
  "cli.status.battery1": "Batterie : {0}",
  "cli.status.level": "Niveau sonore : {0} dB",
- "status.recording": "Enregistrement : {0} (lecture seule)"
+ "status.recording": "Enregistrement : {0} (lecture seule)",
+ "gs.ASSIGNABLE_KEY_SETTING": "Bouton NC/AMBIENT",
+ "gs.elem.NCASM": "Contrôle du son ambiant",
+ "gs.elem.GOOGLE_ASSISTANT": "Assistant Google",
+ "gs.elem.AMAZON_ALEXA": "Amazon Alexa",
+ "card.connected": "Connecté",
+ "appearance.title": "Apparence",
+ "appearance.card": "Afficher une carte quand le casque se connecte",
+ "appearance.card.caption": "Les niveaux de batterie apparaissent au-dessus de la zone de notification.",
+ "appearance.preview": "Aperçu",
+ "appearance.picture": "Image de votre casque",
+ "appearance.picture.caption": "Un dessin à leur couleur, ou votre propre photo.",
+ "appearance.choose": "Choisir une photo…",
+ "appearance.drawing": "Utiliser le dessin",
+ "appearance.filter": "Images"
 }

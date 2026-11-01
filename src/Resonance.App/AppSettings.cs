@@ -17,6 +17,12 @@ public sealed class AppSettings
     /// <summary>"auto" (Windows display language) or a language code such as "en" or "fr".</summary>
     public string Language { get; set; } = "auto";
 
+    /// <summary>Show the animated card above the notification area when headphones connect.</summary>
+    public bool ShowConnectionCard { get; set; } = true;
+
+    /// <summary>The user's own picture of their headphones (a copy in %LOCALAPPDATA%\Resonance), or null for the drawing.</summary>
+    public string? DevicePicture { get; set; }
+
     /// <summary>Action name ("nc", "ambient", "off", "toggle") → key combination.</summary>
     public Dictionary<string, HotkeyEntry> Hotkeys { get; set; } = new();
 

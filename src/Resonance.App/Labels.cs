@@ -134,7 +134,10 @@ public static class Labels
     /// <summary>Choice of a list setting: "TAP_SENSITIVITY_SETTING_ELEM_LOW" → "gs.elem.LOW" or "Low".</summary>
     public static string GeneralSettingChoice(string setting, string choice)
     {
-        var elem = choice.StartsWith(setting + "_ELEM_") ? choice[(setting.Length + "_ELEM_".Length)..] : choice;
+        // "TAP_SENSITIVITY_SETTING_ELEM_LOW" or "ASSIGNABLE_KEY_ELEM_NCASM" (v1 drops "_SETTING")
+        var stem = setting.EndsWith("_SETTING") ? setting[..^"_SETTING".Length] : setting;
+        int at = choice.IndexOf("_ELEM_", StringComparison.Ordinal);
+        var elem = choice.StartsWith(stem) && at >= 0 ? choice[(at + "_ELEM_".Length)..] : choice;
         return TryT($"gs.elem.{elem}") ?? Readable(elem);
     }
 

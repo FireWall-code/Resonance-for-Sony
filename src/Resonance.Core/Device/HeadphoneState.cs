@@ -87,15 +87,19 @@ public sealed record PairedDevice(string Address, string Name, bool Connected, b
 /// A model-specific setting the headphones describe themselves (GENERAL_SETTING D1-D4): its name is an
 /// identifier such as "MULTIPOINT_SETTING", and a list setting carries its own choices.
 /// </summary>
-public sealed record GeneralSetting(byte Id, string Name, bool IsList, IReadOnlyList<GeneralSettingOption> Options, byte? Value)
+public sealed record GeneralSetting(
+    byte Id, string Name, bool IsList, IReadOnlyList<GeneralSettingOption> Options, byte? Value, byte OnValue = OnOff.On)
 {
-    /// <summary>On/off value of a boolean setting (0x00 means on).</summary>
-    public bool IsOn => Value == OnOff.On;
+    /// <summary>On/off value of a switch (v2 uses 0x00 for on, v1 0x01).</summary>
+    public bool IsOn => Value == OnValue;
 }
 
 public sealed record GeneralSettingOption(byte Value, string Name);
 
 /// <summary>Live sound level measured by the headphones (safe listening), in dB; null while nothing plays.</summary>
+/// <summary>Shape of the headphones, for the illustration.</summary>
+public enum HeadphoneForm { Earbuds, OverEar }
+
 public sealed record SoundPressure(int? Decibels, SoundPressureReason Reason);
 
 public enum SoundPressureReason : byte { NotPlaying = 0x00, InCall = 0x01, Detached = 0x02, Measured = 0xFE }
@@ -115,12 +119,13 @@ public sealed class SupportedFunctions
     public bool HasAny(byte first, byte last) => _t1.Any(f => f >= first && f <= last);
     public bool HasAny2(byte first, byte last) => _t2.Any(f => f >= first && f <= last);
 
-    /// <summary>Reads "07 00 &lt;n&gt; (&lt;function&gt; &lt;priority&gt;)×n".</summary>
-    internal void Load(bool table2, byte[] p)
+    /// <summary>Reads "07 00 &lt;n&gt; (&lt;function&gt; &lt;priority&gt;)×n", or one byte per function in v1.</summary>
+    internal void Load(bool table2, byte[] p, bool v1 = false)
     {
         var set = table2 ? _t2 : _t1;
         set.Clear();
-        for (int n = 0, i = 3; n < p[2] && i < p.Length; n++, i += 2) set.Add(p[i]);
+        int stride = v1 ? 1 : 2;
+        for (int n = 0, i = 3; n < p[2] && i < p.Length; n++, i += stride) set.Add(p[i]);
     }
 }
 
@@ -129,11 +134,26 @@ public sealed class HeadphoneState
 {
     public string? ModelName { get; internal set; }
     public string? FirmwareVersion { get; internal set; }
+    /// <summary>ModelSeries byte (0x30 premium, 0x60 LinkBuds, 0x70 neckband…).</summary>
+    public byte? Series { get; internal set; }
+    public ModelColor? Color { get; internal set; }
+
+    /// <summary>Earbuds or over-ear, from the model name, else from the batteries it reports.</summary>
+    public HeadphoneForm Form => ModelName switch
+    {
+        { } n when n.StartsWith("WH-") || n.StartsWith("MDR-") || n.StartsWith("ULT WEAR") => HeadphoneForm.OverEar,
+        { } n when n.StartsWith("WF-") || n.StartsWith("LinkBuds") || n.StartsWith("WI-") => HeadphoneForm.Earbuds,
+        _ => Battery is not null && BatteryLeft is null ? HeadphoneForm.OverEar : HeadphoneForm.Earbuds,
+    };
     public string? Address { get; internal set; }
     public AudioCodec? Codec { get; internal set; }
     public bool? DseeActive { get; internal set; }
 
     public SupportedFunctions Functions { get; } = new();
+
+    /// <summary>MDR protocol version: 2 for current models, 1 for WH-1000XM3/XM4, WF-1000XM3/XM4…</summary>
+    public int ProtocolVersion { get; internal set; } = 2;
+    public bool IsV1 => ProtocolVersion == 1;
 
     /// <summary>Single battery of over-ear headphones.</summary>
     public BatteryInfo? Battery { get; internal set; }

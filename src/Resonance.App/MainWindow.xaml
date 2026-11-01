@@ -14,6 +14,9 @@
         <DockPanel Grid.Column="0" Margin="16,16,8,16">
             <Border DockPanel.Dock="Top" Style="{StaticResource Card}" Padding="16">
                 <StackPanel>
+                    <local:DeviceArt Height="96" Margin="0,0,0,10" HorizontalAlignment="Center" Width="150"
+                                     Form="{Binding DeviceForm}" BodyColor="{Binding DeviceColor}" ImagePath="{Binding DevicePicture}"
+                                     Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisibility}}" />
                     <TextBlock Text="{Binding DeviceName}" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding Firmware}" Style="{StaticResource Caption}" Margin="0,2,0,12" />
                     <StackPanel HorizontalAlignment="Left" Visibility="{Binding Has[SingleBattery], Converter={StaticResource BoolToVisibility}}">
@@ -384,6 +387,32 @@
                                 <StackPanel>
                                     <TextBlock Text="{local:L settings.language}" />
                                     <TextBlock Text="{local:L settings.language.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L appearance.title}" Style="{StaticResource CardTitle}" />
+                            <DockPanel Style="{StaticResource Row}">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="{local:L appearance.preview}" Command="{Binding PreviewCardCommand}" Margin="0,0,12,0" />
+                                    <CheckBox IsChecked="{Binding ShowConnectionCard}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{local:L appearance.card}" />
+                                    <TextBlock Text="{local:L appearance.card.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="{local:L appearance.drawing}" Command="{Binding UseDrawingCommand}" Margin="0,0,8,0"
+                                            Visibility="{Binding HasDevicePicture, Converter={StaticResource BoolToVisibility}}" />
+                                    <Button Content="{local:L appearance.choose}" Command="{Binding ChoosePictureCommand}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{local:L appearance.picture}" />
+                                    <TextBlock Text="{local:L appearance.picture.caption}" Style="{StaticResource Caption}" />
                                 </StackPanel>
                             </DockPanel>
                         </StackPanel>

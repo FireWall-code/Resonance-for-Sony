@@ -56,6 +56,40 @@ public static class F2
         SafeListeningHbs1 = 0x50, SafeListeningTws2 = 0x53;
 }
 
+/// <summary>
+/// MDR protocol v1 (WH-1000XM3/XM4, WF-1000XM3/XM4…): function types, the common group (battery, codec,
+/// upscaling, power off use fixed command codes) and inquired types that differ from v2.
+/// </summary>
+public static class V1
+{
+    // Function types (CONNECT_RET_SUPPORT_FUNCTION lists one byte per function)
+    public const byte FnBattery = 0x11, FnUpscalingIndicator = 0x12, FnCodec = 0x13, FnLrBattery = 0x15,
+        FnCradleBattery = 0x18, FnPowerOff = 0x21, FnPresetEq = 0x51, FnNc = 0x61, FnNcAndAmbient = 0x62,
+        FnAmbient = 0x63, FnNcOptimizer = 0x81, FnPlayback = 0xA1, FnGeneralSetting3 = 0xD3,
+        FnConnectionMode = 0xE1, FnUpscaling = 0xE2, FnControlByWearing = 0xF3, FnAutoPowerOff = 0xF4,
+        FnSmartTalking = 0xF5;
+    // Common group
+    public const byte GetBattery = 0x10, RetBattery = 0x11, NtfyBattery = 0x13,
+        GetUpscalingEffect = 0x14, RetUpscalingEffect = 0x15, NtfyUpscalingEffect = 0x17,
+        GetAudioCodec = 0x18, RetAudioCodec = 0x19, NtfyAudioCodec = 0x1B, SetPowerOff = 0x22;
+    public const byte BatterySingle = 0x00, BatteryLr = 0x01, BatteryCradle = 0x02;
+    // Inquired types
+    public const byte NcAsmNc = 0x01, NcAsmNcAndAmbient = 0x02, NcAsmAmbient = 0x03, NcDual = 0x02;
+    public const byte PresetEq = 0x01;
+    public const byte AudioConnectionMode = 0x01, AudioUpscaling = 0x02;
+    public const byte SystemControlByWearing = 0x03, SystemAutoPowerOff = 0x04, SystemSmartTalking = 0x05;
+    public const byte PlayVolume = 0x20;
+    // General settings: 01 switch, 02 list
+    public const byte GsSwitch = 0x01, GsList = 0x02;
+}
+
+/// <summary>Body colour reported in CONNECT_RET_DEVICE_INFO (series and colour); "-I" variants map to the base colour.</summary>
+public enum ModelColor : byte
+{
+    Default = 0, Black = 1, White = 2, Silver = 3, Red = 4, Blue = 5, Pink = 6, Yellow = 7, Green = 8, Gray = 9,
+    Gold = 10, Cream = 11, Orange = 12, Brown = 13, Violet = 14,
+}
+
 /// <summary>"Inquired type" values (byte 1 of a message).</summary>
 public static class Inq
 {

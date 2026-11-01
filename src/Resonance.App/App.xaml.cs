@@ -29,6 +29,8 @@ public partial class App : Application
         _window = new MainWindow { DataContext = _vm };
         CreateTray();
         _vm.DeviceStateChanged += UpdateTray;
+        _vm.Connected += () => { if (_vm.ShowConnectionCard) ShowConnectionCard(force: false); };
+        _vm.CardRequested += () => ShowConnectionCard(force: true);
         _vm.PropertyChanged += (_, a) => { if (a.PropertyName is nameof(MainViewModel.Status) or nameof(MainViewModel.IsConnected)) UpdateTray(); };
 
         // "--background" starts hidden in the tray (for the Windows startup entry).
@@ -44,6 +46,8 @@ public partial class App : Application
     {
         if (args.FirstOrDefault() == "__show") { await Dispatcher.InvokeAsync(ShowWindow); return CommandResult.Done("ok"); }
         if (args.FirstOrDefault() == "__ping") return CommandResult.Done("pong");
+        // Shows the connection card now (resonance-cli __card), as the Preview button does.
+        if (args.FirstOrDefault() == "__card") { await Dispatcher.InvokeAsync(() => ShowConnectionCard(force: true)); return CommandResult.Done("ok"); }
         // Documentation screenshots, rendered off-screen: resonance-cli __screenshot <folder>
         if (args.FirstOrDefault() == "__screenshot")
             return CommandResult.Done(await Dispatcher.InvokeAsync(() => _window!.RenderPages(args.ElementAtOrDefault(1) ?? ".")));
@@ -87,6 +91,23 @@ public partial class App : Application
         _ambientItem!.Checked = _vm.NcMode == 1;
         _offItem!.Checked = _vm.NcMode == 2;
         foreach (var item in new[] { _ncItem, _ambientItem, _offItem }) item.Enabled = _vm.IsConnected;
+    }
+
+    private DateTime _lastCard = DateTime.MinValue;
+    private ConnectionCard? _card;
+
+    /// <summary>
+    /// The animated card above the notification area. Reconnections within two minutes (a connection
+    /// priority change, a short drop) do not show it again.
+    /// </summary>
+    private void ShowConnectionCard(bool force)
+    {
+        if (_vm is null || (!force && DateTime.UtcNow - _lastCard < TimeSpan.FromMinutes(2))) return;
+        _lastCard = DateTime.UtcNow;
+        _card?.Close();
+        _card = _vm.CreateCard(ShowWindow);
+        _card.Closed += (_, _) => _card = null;
+        _card.Show();
     }
 
     public void ShowWindow()

@@ -89,13 +89,13 @@ public sealed class GeneralSettingViewModel : ObservableObject
     public bool IsOn
     {
         get => _isOn;
-        set { if (SetField(ref _isOn, value)) _owner.OnGeneralSettingChanged(Slot, OnOff.From(value)); }
+        set { if (SetField(ref _isOn, value)) _owner.OnGeneralSwitchChanged(Slot, value); }
     }
 
     public Option<byte>? Selected
     {
         get => _selected;
-        set { if (SetField(ref _selected, value) && value != null) _owner.OnGeneralSettingChanged(Slot, value.Value); }
+        set { if (SetField(ref _selected, value) && value != null) _owner.OnGeneralChoiceChanged(Slot, value.Value); }
     }
 
     internal void Load(GeneralSetting gs)
@@ -173,6 +173,12 @@ public sealed class MainViewModel : ObservableObject
 
     public event Action? DeviceStateChanged;
 
+    /// <summary>Raised on the UI thread once headphones are connected and read.</summary>
+    public event Action? Connected;
+
+    /// <summary>Raised when the user asks to see the connection card.</summary>
+    public event Action? CardRequested;
+
     /// <summary>The connected headphones, or null while searching / reconnecting.</summary>
     public Headphones? Device => _hp;
 
@@ -215,6 +221,7 @@ public sealed class MainViewModel : ObservableObject
                         IsConnected = true;
                         Status = T("status.connected");
                         _ui.Invoke(Sync);
+                        _ui.Invoke(() => Connected?.Invoke());
                         return;
                     }
                 }
@@ -275,6 +282,8 @@ public sealed class MainViewModel : ObservableObject
             Firmware = s.FirmwareVersion is { } fw ? T("firmware", fw) : "";
             Codec = s.Codec is { } c ? Labels.Of(c) : "";
             Battery = s.Battery; BatteryLeft = s.BatteryLeft; BatteryRight = s.BatteryRight; BatteryCase = s.BatteryCase;
+            DeviceForm = s.Form;
+            DeviceColor = s.Color ?? ModelColor.Default;
             Raise(nameof(BatterySummary));
             Has = Features(s);
             SoundLevel = s.SoundPressure is { } sp ? Labels.Of(sp) : "";
@@ -479,6 +488,62 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Tray shortcut: cycles noise cancelling → ambient → off.</summary>
     public void CycleNoiseMode() => NcMode = (NcMode + 1) % 3;
 
+    // ------------------------------------------------------------ appearance: illustration and connection card
+
+    private HeadphoneForm _deviceForm;
+    private ModelColor _deviceColor;
+    public HeadphoneForm DeviceForm { get => _deviceForm; private set => SetField(ref _deviceForm, value); }
+    public ModelColor DeviceColor { get => _deviceColor; private set => SetField(ref _deviceColor, value); }
+
+    public string? DevicePicture
+    {
+        get => _settings.DevicePicture;
+        private set { _settings.DevicePicture = value; _settings.Save(); Raise(); Raise(nameof(HasDevicePicture)); }
+    }
+    public bool HasDevicePicture => !string.IsNullOrEmpty(DevicePicture);
+
+    public bool ShowConnectionCard
+    {
+        get => _settings.ShowConnectionCard;
+        set { if (_settings.ShowConnectionCard == value) return; _settings.ShowConnectionCard = value; _settings.Save(); Raise(); }
+    }
+
+    public ICommand ChoosePictureCommand => new RelayCommand(() =>
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = T("appearance.filter") + "|*.png;*.jpg;*.jpeg;*.bmp;*.gif" };
+        if (dialog.ShowDialog() != true) return Task.CompletedTask;
+        // A private copy: the original can be moved or deleted.
+        var dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Resonance");
+        var target = System.IO.Path.Combine(dir, "device-picture" + System.IO.Path.GetExtension(dialog.FileName).ToLowerInvariant());
+        try
+        {
+            System.IO.Directory.CreateDirectory(dir);
+            foreach (var old in System.IO.Directory.GetFiles(dir, "device-picture.*")) System.IO.File.Delete(old);
+            System.IO.File.Copy(dialog.FileName, target, overwrite: true);
+            DevicePicture = null; // the path may be identical: force the image to reload
+            DevicePicture = target;
+        }
+        catch (System.IO.IOException ex) { Status = ex.Message; }
+        return Task.CompletedTask;
+    });
+
+    public ICommand UseDrawingCommand => new RelayCommand(() => { DevicePicture = null; return Task.CompletedTask; });
+    public ICommand PreviewCardCommand => new RelayCommand(() => { CardRequested?.Invoke(); return Task.CompletedTask; });
+
+    internal ConnectionCard CreateCard(Action? open) =>
+        new(DeviceName, DeviceForm, DeviceColor, DevicePicture, CardBatteries(), open);
+
+    /// <summary>Battery levels for the connection card: one value for over-ear headphones, else left / right / case.</summary>
+    public IReadOnlyList<(string Label, BatteryInfo Battery)> CardBatteries()
+    {
+        var list = new List<(string, BatteryInfo)>();
+        if (BatteryLeft is null && Battery is { } single) list.Add((T("side.battery"), single));
+        if (BatteryLeft is { } l) list.Add((T("side.left"), l));
+        if (BatteryRight is { } r) list.Add((T("side.right"), r));
+        if (BatteryCase is { } c) list.Add((T("side.case"), c));
+        return list;
+    }
+
     // ------------------------------------------------------------ what these headphones support
 
     private IReadOnlyDictionary<string, bool> _has = Features(null);
@@ -518,8 +583,8 @@ public sealed class MainViewModel : ObservableObject
             ["PauseWhenRemoved"] = s?.PauseWhenRemoved is not null,
             ["AutoPowerOff"] = s?.AutoPowerOff is not null,
             ["CaringCharge"] = s?.CaringCharge is not null,
-            ["FitTest"] = Declared(F1.WearingStatusDetector),
-            ["PowerOff"] = Declared(F1.PowerOff),
+            ["FitTest"] = s is { IsV1: false } && Declared(F1.WearingStatusDetector),
+            ["PowerOff"] = s is { IsV1: true } ? s.Functions.Has(V1.FnPowerOff) : Declared(F1.PowerOff),
             ["Devices"] = s?.PairedDevices is not null,
             ["SingleBattery"] = s?.Battery is not null && s.BatteryLeft is null,
             ["EarbudBatteries"] = s?.BatteryLeft is not null,
@@ -696,9 +761,14 @@ public sealed class MainViewModel : ObservableObject
         OtherSettings = others.Select(g => new GeneralSettingViewModel(this, g)).ToList();
     }
 
-    internal void OnGeneralSettingChanged(byte slot, byte value)
+    internal void OnGeneralSwitchChanged(byte slot, bool on)
     {
-        if (!_loading) _ = Send(hp => hp.SetGeneralSettingAsync(slot, value));
+        if (!_loading) _ = Send(hp => hp.SetGeneralSwitchAsync(slot, on));
+    }
+
+    internal void OnGeneralChoiceChanged(byte slot, byte index)
+    {
+        if (!_loading) _ = Send(hp => hp.SetGeneralChoiceAsync(slot, index));
     }
 
     public ICommand PowerOffCommand { get; }

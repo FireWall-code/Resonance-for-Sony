@@ -98,7 +98,27 @@ public partial class MainWindow : Window
             png.Save(file);
         }
         Nav.SelectedIndex = previous;
-        return $"{PageNames.Length} pages rendered to {folder}";
+        RenderCard(Path.Combine(folder, "card.png"), scale);
+        return $"{PageNames.Length + 1} images rendered to {folder}";
+    }
+
+    /// <summary>The connection card in its final state (rings filled), without showing it.</summary>
+    private void RenderCard(string file, double scale)
+    {
+        var card = ((MainViewModel)DataContext).CreateCard(open: null);
+        card.ShowFinalState();
+        var root = card.CardRoot;
+        root.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var size = root.DesiredSize;
+        root.Arrange(new Rect(size));
+        root.UpdateLayout();
+        var bitmap = new RenderTargetBitmap((int)(size.Width * scale), (int)(size.Height * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
+        bitmap.Render(root);
+        var png = new PngBitmapEncoder();
+        png.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = File.Create(file);
+        png.Save(stream);
+        card.Close();
     }
 
     // Closing the window keeps Resonance running in the notification area.

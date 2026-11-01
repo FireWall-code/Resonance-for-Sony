@@ -322,5 +322,19 @@
  "gs.elem.OFF": "Off",
  "cli.status.battery1": "Battery: {0}",
  "cli.status.level": "Sound level: {0} dB",
- "status.recording": "Recording: {0} (read-only)"
+ "status.recording": "Recording: {0} (read-only)",
+ "gs.ASSIGNABLE_KEY_SETTING": "NC/AMBIENT button",
+ "gs.elem.NCASM": "Ambient sound control",
+ "gs.elem.GOOGLE_ASSISTANT": "Google Assistant",
+ "gs.elem.AMAZON_ALEXA": "Amazon Alexa",
+ "card.connected": "Connected",
+ "appearance.title": "Appearance",
+ "appearance.card": "Show a card when headphones connect",
+ "appearance.card.caption": "Battery levels pop up above the notification area.",
+ "appearance.preview": "Preview",
+ "appearance.picture": "Picture of your headphones",
+ "appearance.picture.caption": "A drawing in their colour, or your own photo.",
+ "appearance.choose": "Choose a photo…",
+ "appearance.drawing": "Use the drawing",
+ "appearance.filter": "Images"
 }

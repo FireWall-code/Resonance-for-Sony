@@ -37,7 +37,7 @@ public static class DeviceMemory
 /// High-level controller: reads every supported setting at connect time, keeps
 /// <see cref="State"/> in sync with RET/NTFY messages and exposes typed setters.
 /// </summary>
-public sealed class Headphones : IAsyncDisposable
+public sealed partial class Headphones : IAsyncDisposable
 {
     private readonly MdrConnection? _conn;
     private MdrConnection Conn => _conn ?? throw new InvalidOperationException("Replayed headphones cannot send.");
@@ -54,6 +54,7 @@ public sealed class Headphones : IAsyncDisposable
     {
         _conn = conn;
         if (conn is null) return;
+        if (!conn.IsV2) State.ProtocolVersion = 1;
         conn.MessageReceived += OnMessage;
         conn.Disconnected += e => Disconnected?.Invoke(e);
     }
@@ -107,6 +108,7 @@ public sealed class Headphones : IAsyncDisposable
     [
         Q1(T1.ConnectGetDeviceInfo, Inq.DeviceInfoModelName, ReadGroup.Info),
         Q1(T1.ConnectGetDeviceInfo, Inq.DeviceInfoFwVersion, ReadGroup.Info),
+        Q1(T1.ConnectGetDeviceInfo, Inq.DeviceInfoSeriesColor, ReadGroup.Info),
         Q1(T1.ConnectGetCapabilityInfo, 0x00, ReadGroup.Info),
         Q1(T1.Common | Op.GetStatus, Inq.CommonAudioCodec, ReadGroup.Info),
         Q1(T1.Common | Op.GetStatus, Inq.CommonUpscalingEffect, ReadGroup.Audio),
@@ -166,6 +168,11 @@ public sealed class Headphones : IAsyncDisposable
     private IEnumerable<Query> Plan()
     {
         var f = State.Functions;
+        if (State.IsV1)
+        {
+            foreach (var q in PlanV1()) yield return q;
+            yield break;
+        }
         if (!f.Known)
         {
             foreach (var q in LegacyQueries) yield return q;
@@ -176,6 +183,7 @@ public sealed class Headphones : IAsyncDisposable
 
         yield return Q1(T1.ConnectGetDeviceInfo, Inq.DeviceInfoModelName, info);
         yield return Q1(T1.ConnectGetDeviceInfo, Inq.DeviceInfoFwVersion, info);
+        yield return Q1(T1.ConnectGetDeviceInfo, Inq.DeviceInfoSeriesColor, info);
         yield return Q1(T1.ConnectGetCapabilityInfo, 0x00, info);
         if (f.Has(F1.CodecIndicator)) yield return Q1(T1.Common | Op.GetStatus, Inq.CommonAudioCodec, info);
         if (f.Has(F1.UpscalingIndicator)) yield return Q1(T1.Common | Op.GetStatus, Inq.CommonUpscalingEffect, audio);
@@ -290,7 +298,8 @@ public sealed class Headphones : IAsyncDisposable
         if (groups == ReadGroup.None || IsRecording) return;
         if (!_discovered)
         {
-            foreach (var q in DiscoveryQueries) await RunAsync(q, ct);
+            foreach (var q in DiscoveryQueries)
+                if (q.Table == DataType.DataMdrNo1 || !State.IsV1) await RunAsync(q, ct);
             _discovered = true;
         }
         foreach (var q in Plan().ToList())
@@ -327,6 +336,8 @@ public sealed class Headphones : IAsyncDisposable
         // RET and NTFY share the layout: normalise to the RET op code.
         if (op is Op.NtfyStatus or Op.NtfyParam or Op.NtfyExt) op -= 2;
         var s = State;
+        // A recording says which protocol it uses by the size of its version answer (v1: 2 bytes).
+        if (_conn is null && m.Table == DataType.DataMdrNo1 && p[0] == 0x01 && p.Length == 4) s.ProtocolVersion = 1;
 
         if (m.Table == DataType.DataMdrNo1)
         {
@@ -335,14 +346,21 @@ public sealed class Headphones : IAsyncDisposable
                 case 0x05: // CONNECT_RET_DEVICE_INFO
                     if (inq == Inq.DeviceInfoModelName) s.ModelName = Str(p, 2);
                     else if (inq == Inq.DeviceInfoFwVersion) s.FirmwareVersion = Str(p, 2);
+                    else if (inq == Inq.DeviceInfoSeriesColor && p.Length > 3)
+                    {
+                        s.Series = p[2];
+                        // 17-30 are the "-I" variants of 1-14.
+                        s.Color = (ModelColor)(p[3] is >= 17 and <= 30 ? p[3] - 16 : p[3]);
+                    }
                     return true;
                 case 0x03: // CONNECT_RET_CAPABILITY_INFO: 03 00 <version> <len> "58:18:..."
                     s.Address = Str(p, 3);
                     return true;
                 case 0x07: // CONNECT_RET_SUPPORT_FUNCTION
-                    s.Functions.Load(table2: false, p);
+                    s.Functions.Load(table2: false, p, s.IsV1);
                     return true;
             }
+            if (s.IsV1) return ParseV1(p, m.Table);
             switch (group, op, inq)
             {
                 case (T1.Common, Op.RetStatus, Inq.CommonAudioCodec):
@@ -377,31 +395,11 @@ public sealed class Headphones : IAsyncDisposable
                     s.NcAmbKeyCycle = (NcAmbCycle)p[2]; return true;
 
                 case (T1.EqEbb, Op.RetCapability, Inq.PresetEqAndErrorCode or Inq.PresetEq or Inq.PresetEqNonCustomizable):
-                {
-                    // 51 04 <bands> <steps> <presetCount> (<presetId> <nameLen> <name>)*
-                    int bands = p[2], steps = p[3], count = p[4], i = 5;
-                    var presets = new List<EqPreset>();
-                    for (int n = 0; n < count && i + 1 < p.Length; n++)
-                    {
-                        presets.Add((EqPreset)p[i]);
-                        i += 2 + p[i + 1];
-                    }
-                    s.EqualizerCapability = new(bands, steps, presets, s.EqualizerCapability?.FrequenciesHz ?? []);
-                    return true;
-                }
+                    ParseEqualizerCapability(p); return true;
                 case (T1.EqEbb, Op.RetExt, Inq.PresetEqAndErrorCode or Inq.PresetEq or Inq.PresetEqNonCustomizable):
-                {
-                    // 5B 04 <bands> (01 <freq u16 BE>)*
-                    var freqs = new List<int>();
-                    for (int i = 3; i + 2 < p.Length; i += 3) freqs.Add((p[i + 1] << 8) | p[i + 2]);
-                    s.EqualizerCapability = (s.EqualizerCapability ?? new(p[2], 13, [], [])) with { FrequenciesHz = freqs };
-                    return true;
-                }
+                    ParseEqualizerBands(p); return true;
                 case (T1.EqEbb, Op.RetParam, Inq.PresetEqAndErrorCode or Inq.PresetEq or Inq.PresetEqNonCustomizable):
-                    _eqInq = inq;
-                    s.Equalizer = new((EqPreset)p[2], p.Skip(4).Take(p[3]).Select(b => (int)b).ToArray());
-                    s.EqualizerCapability ??= EqualizerCapability.Default(p[3]);
-                    return true;
+                    ParseEqualizerParam(p); return true;
 
                 case (T1.Audio, Op.RetParam, Inq.Upscaling):
                     s.Dsee = p[2] == 0x01; return true; // 00 off, 01 auto
@@ -483,6 +481,7 @@ public sealed class Headphones : IAsyncDisposable
         }
         else if (m.Table == DataType.DataMdrNo2)
         {
+            if (s.IsV1) return ParseV1(p, m.Table);
             if (p[0] == 0x07) { s.Functions.Load(table2: true, p); return true; }
             switch (group, op, inq)
             {
@@ -517,6 +516,39 @@ public sealed class Headphones : IAsyncDisposable
 
     private static string Str(byte[] p, int lenIndex) =>
         Encoding.UTF8.GetString(p, lenIndex + 1, Math.Min(p[lenIndex], p.Length - lenIndex - 1));
+
+    // 51 <type> <bands> <steps> <preset count> (<preset id> <name len> <name>)×count
+    private void ParseEqualizerCapability(byte[] p)
+    {
+        int bands = p[2], steps = p[3], count = p[4], i = 5;
+        var presets = new List<EqPreset>();
+        for (int n = 0; n < count && i + 1 < p.Length; n++)
+        {
+            presets.Add((EqPreset)p[i]);
+            i += 2 + p[i + 1];
+        }
+        State.EqualizerCapability = new(bands, steps, presets, State.EqualizerCapability?.FrequenciesHz ?? []);
+    }
+
+    // 5B <type> <bands> (<info type> <u16>)×bands: 01 Hz, 02 kHz, 10 specific band (Clear Bass, kept as 0 Hz)
+    private void ParseEqualizerBands(byte[] p)
+    {
+        var freqs = new List<int>();
+        for (int i = 3, n = 0; n < p[2] && i + 2 < p.Length; n++, i += 3)
+        {
+            int value = (p[i + 1] << 8) | p[i + 2];
+            freqs.Add(p[i] switch { 0x01 => value, 0x02 => value * 1000, 0x10 => 0, _ => -1 });
+        }
+        State.EqualizerCapability = (State.EqualizerCapability ?? new(p[2], 13, [], [])) with { FrequenciesHz = freqs };
+    }
+
+    // 57 <type> <preset> <n> <step>×n
+    private void ParseEqualizerParam(byte[] p)
+    {
+        _eqInq = p[1];
+        State.Equalizer = new((EqPreset)p[2], p.Skip(4).Take(p[3]).Select(b => (int)b).ToArray());
+        State.EqualizerCapability ??= EqualizerCapability.Default(p[3]);
+    }
 
     // Inquired types of the variants this model answered, reused when writing.
     private byte? _eqInq, _connectionInq, _bgmInq, _autoPowerOffInq;
@@ -581,7 +613,9 @@ public sealed class Headphones : IAsyncDisposable
     {
         var gs = State._generalSettings.TryGetValue(id, out var old)
             ? old with { Value = value }
-            : new GeneralSetting(id, GeneralSettingNames.Legacy(id), type == 0x01, [], value);
+            : State.IsV1
+                ? new GeneralSetting(id, $"SETTING_{id:X2}", type == V1.GsList, [], value, OnValue: 0x01)
+                : new GeneralSetting(id, GeneralSettingNames.Legacy(id), type == 0x01, [], value);
         State._generalSettings[id] = gs;
         ApplyKnownGeneralSetting(gs);
     }
@@ -676,6 +710,7 @@ public sealed class Headphones : IAsyncDisposable
     /// <summary>Writes noise control in the layout of the model's variant (see <see cref="ParseNoise"/>).</summary>
     public Task SetNoiseControlAsync(NoiseControlState nc)
     {
+        if (State.IsV1) return SetNoiseControlV1Async(nc);
         byte variant = State.NoiseVariant ?? Inq.NcAsmNoiseAdaptive;
         byte on = (byte)(nc.Enabled ? 1 : 0), mode = (byte)nc.Mode, voice = (byte)(nc.VoiceFocus ? 1 : 0);
         byte level = (byte)Math.Clamp(nc.AmbientLevel, 0, 20);
@@ -702,15 +737,20 @@ public sealed class Headphones : IAsyncDisposable
     public Task SetEqualizerPresetAsync(EqPreset preset) =>
         Set1(T1.EqEbb | Op.SetParam, _eqInq ?? Inq.PresetEqAndErrorCode, (byte)preset, 0x00);
 
-    public Task SetDseeAsync(bool on) => Set1(T1.Audio | Op.SetParam, Inq.Upscaling, (byte)(on ? 1 : 0));
-    public Task SetConnectionPriorityAsync(PriorMode mode) =>
-        Set1(T1.Audio | Op.SetParam, _connectionInq ?? Inq.ConnectionModeLdac, (byte)mode);
+    public Task SetDseeAsync(bool on) => State.IsV1
+        ? Set1(T1.Audio | Op.SetParam, V1.AudioUpscaling, 0x00, (byte)(on ? 1 : 0))
+        : Set1(T1.Audio | Op.SetParam, Inq.Upscaling, (byte)(on ? 1 : 0));
+    public Task SetConnectionPriorityAsync(PriorMode mode) => State.IsV1
+        ? Set1(T1.Audio | Op.SetParam, V1.AudioConnectionMode, 0x00, (byte)mode)
+        : Set1(T1.Audio | Op.SetParam, _connectionInq ?? Inq.ConnectionModeLdac, (byte)mode);
     public Task SetListeningModeAsync(bool bgm, RoomSize size) =>
         Set1(T1.Audio | Op.SetParam, _bgmInq ?? Inq.BgmModeAndError, OnOff.From(bgm), (byte)size);
     public Task SetVoiceBoostAsync(bool on) => Set1(T1.Audio | Op.SetParam, Inq.VoiceContents, OnOff.From(on));
     public Task SetSoundLeakageReductionAsync(bool on) => Set1(T1.Audio | Op.SetParam, Inq.SoundLeakageReduction, OnOff.From(on));
 
-    public Task SetSpeakToChatAsync(bool on) => Set1(T1.System | Op.SetParam, Inq.SpeakToChat, OnOff.From(on), OnOff.From(on));
+    public Task SetSpeakToChatAsync(bool on) => State.IsV1
+        ? SetSystemSwitchV1Async(V1.SystemSmartTalking, on)
+        : Set1(T1.System | Op.SetParam, Inq.SpeakToChat, OnOff.From(on), OnOff.From(on));
     public Task SetSpeakToChatOptionsAsync(DetectSensitivity sensitivity, ModeOutTime time) =>
         Set1(T1.System | Op.SetExt, Inq.SpeakToChat, (byte)sensitivity, (byte)time);
 
@@ -740,27 +780,43 @@ public sealed class Headphones : IAsyncDisposable
         Set1(T1.System | Op.SetParam, Inq.QuickAccess, 0x02, first, second);
 
     public Task SetHeadGesturesAsync(bool on) => Set1(T1.System | Op.SetParam, Inq.HeadGesture, OnOff.From(on));
-    public Task SetPauseWhenRemovedAsync(bool on) => Set1(T1.System | Op.SetParam, Inq.PlaybackByWearing, OnOff.From(on));
+    public Task SetPauseWhenRemovedAsync(bool on) => State.IsV1
+        ? SetSystemSwitchV1Async(V1.SystemControlByWearing, on)
+        : Set1(T1.System | Op.SetParam, Inq.PlaybackByWearing, OnOff.From(on));
     public Task SetVoiceAssistantAsync(VoiceAssistant va) => Set1(T1.System | Op.SetParam, Inq.VoiceAssistant, (byte)va);
 
-    public Task SetAutoPowerOffAsync(AutoPowerOff value) =>
-        Set1(T1.Power | Op.SetParam, _autoPowerOffInq ?? Inq.AutoPowerOffWearing, (byte)value, 0x00);
+    public Task SetAutoPowerOffAsync(AutoPowerOff value) => State.IsV1
+        ? Set1(T1.System | Op.SetParam, V1.SystemAutoPowerOff, 0x01, (byte)value, (byte)value)
+        : Set1(T1.Power | Op.SetParam, _autoPowerOffInq ?? Inq.AutoPowerOffWearing, (byte)value, 0x00);
 
     public Task SetMultipointAsync(bool on) =>
-        SetGeneralSettingAsync(GeneralSettingSlot(GeneralSettingNames.Multipoint, Inq.GsMultipoint), OnOff.From(on));
+        SetGeneralSwitchAsync(GeneralSettingSlot(GeneralSettingNames.Multipoint, Inq.GsMultipoint), on);
     public Task SetSidetoneAsync(bool on) =>
-        SetGeneralSettingAsync(GeneralSettingSlot(GeneralSettingNames.Sidetone, Inq.GsSidetone), OnOff.From(on));
+        SetGeneralSwitchAsync(GeneralSettingSlot(GeneralSettingNames.Sidetone, Inq.GsSidetone), on);
     public Task SetOneSideNoiseControlAsync(bool on) =>
-        SetGeneralSettingAsync(GeneralSettingSlot(GeneralSettingNames.OneSideNoiseControl, Inq.GsOneSideNc), OnOff.From(on));
+        SetGeneralSwitchAsync(GeneralSettingSlot(GeneralSettingNames.OneSideNoiseControl, Inq.GsOneSideNc), on);
 
-    /// <summary>Writes a self-described setting: an on/off value (OnOff) or the index of a list choice.</summary>
-    public Task SetGeneralSettingAsync(byte slot, byte value)
+    /// <summary>Turns a self-described switch on or off.</summary>
+    public Task SetGeneralSwitchAsync(byte slot, bool on)
     {
-        bool isList = State.GeneralSettings.TryGetValue(slot, out var gs) && gs.IsList;
-        return Set1(T1.GeneralSetting | Op.SetParam, slot, (byte)(isList ? 1 : 0), value);
+        byte onValue = State.GeneralSettings.TryGetValue(slot, out var gs) ? gs.OnValue : OnOff.On;
+        byte offValue = onValue == OnOff.On ? OnOff.Off : (byte)0x00;
+        return WriteGeneralSetting(slot, isList: false, on ? onValue : offValue);
     }
 
-    public Task SetMusicVolumeAsync(int volume) => Set1(T1.Play | Op.SetParam, Inq.MusicVolume, (byte)volume);
+    /// <summary>Selects a choice of a self-described list (index from <see cref="GeneralSetting.Options"/>).</summary>
+    public Task SetGeneralChoiceAsync(byte slot, byte index) => WriteGeneralSetting(slot, isList: true, index);
+
+    // D8 <slot> <type> <value>; the type byte is 00 switch / 01 list in v2, 01 / 02 in v1.
+    private Task WriteGeneralSetting(byte slot, bool isList, byte value)
+    {
+        byte type = State.IsV1 ? (isList ? V1.GsList : V1.GsSwitch) : (byte)(isList ? 1 : 0);
+        return Set1(T1.GeneralSetting | Op.SetParam, slot, type, value);
+    }
+
+    public Task SetMusicVolumeAsync(int volume) => State.IsV1
+        ? Set1(T1.Play | Op.SetParam, Inq.PlaybackController, V1.PlayVolume, (byte)volume)
+        : Set1(T1.Play | Op.SetParam, Inq.MusicVolume, (byte)volume);
     public Task SendPlaybackAsync(PlaybackControl control) =>
         Set1(T1.Play | Op.SetStatus, Inq.PlaybackController, 0x00, (byte)control);
 
@@ -800,7 +856,9 @@ public sealed class Headphones : IAsyncDisposable
     }
 
     /// <summary>Turns the headphones off (POWER_SET_STATUS / POWER_OFF / USER_POWER_OFF).</summary>
-    public Task PowerOffAsync() => Set1(T1.Power | Op.SetStatus, Inq.PowerOff, 0x01);
+    public Task PowerOffAsync() => State.IsV1
+        ? Set1(V1.SetPowerOff, 0x00, 0x01)
+        : Set1(T1.Power | Op.SetStatus, Inq.PowerOff, 0x01);
 
     public Task SendRawAsync(bool table2, byte[] payload) =>
         Conn.SendAsync(table2 ? DataType.DataMdrNo2 : DataType.DataMdrNo1, payload);

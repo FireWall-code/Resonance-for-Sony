@@ -27,6 +27,8 @@ que sur téléphone. Resonance apporte ses réglages à Windows 10 et 11, sans �
   test des embouts, et tout réglage propre au modèle que le casque décrit lui-même (sensibilité du toucher…)
 - **Bonus Windows** : icône dans la zone de notification (un clic change le mode), raccourcis clavier globaux,
   démarrage avec Windows, ligne de commande scriptable, thème clair / sombre, anglais et français
+- **Votre casque à l'écran** : un dessin de votre modèle à sa couleur (ou votre propre photo), et une carte
+  animée avec les niveaux de batterie au-dessus de la zone de notification quand il se connecte
 
 ## Casques pris en charge
 
@@ -37,8 +39,8 @@ chaque modèle (variantes de réduction de bruit, d'égaliseur, de batterie et d
 |---|---|
 | WF-1000XM6 | Entièrement testé (chaque réglage vérifié sur le casque) |
 | WF-1000XM5, LinkBuds Clip | Toutes les pages vérifiées sur des sessions enregistrées ; modification des réglages pas encore confirmée par un propriétaire |
-| Autres casques Sound Connect (WH-1000XM5/XM6, WF-C700N, LinkBuds…) | Devraient fonctionner : même protocole et mêmes variantes. [Aidez à confirmer le vôtre](CONTRIBUTING.md#add-support-for-your-headphones) |
-| Anciens modèles (WH-1000XM3/XM4, WF-1000XM3/XM4) | Pas encore : ils utilisent la première version du protocole |
+| WH-1000XM3 | Première version du protocole : vérifié sur une session enregistrée (batterie, réduction de bruit, égaliseur, DSEE, connexion, extinction auto, bouton NC/AMBIENT, panneau tactile, volume) |
+| Autres modèles Sound Connect et Headphones Connect (WH-1000XM4/XM5/XM6, WF-1000XM4, WF-C700N, LinkBuds…) | Devraient fonctionner : mêmes protocoles et variantes. [Aidez à confirmer le vôtre](CONTRIBUTING.md#add-support-for-your-headphones) |
 
 ## Installation
 
