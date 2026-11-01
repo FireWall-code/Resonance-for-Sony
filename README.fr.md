@@ -6,6 +6,9 @@ Resonance est une application Windows native (C# / .NET 10, design Fluent) qui p
 en Bluetooth, comme l'application mobile Sony Sound Connect. Réduction de bruit, égaliseur, batterie,
 commandes tactiles : tout se règle depuis le PC, un raccourci clavier ou la ligne de commande.
 
+Vous cherchez **Sony Sound Connect (anciennement Headphones Connect) sur PC** ? Sony ne propose l'application
+que sur téléphone. Resonance apporte ses réglages à Windows 10 et 11, sans émulateur ni téléphone.
+
 ![Fenêtre principale de Resonance](docs/images/sound.png)
 
 *[English version](README.md)*

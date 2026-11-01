@@ -7,6 +7,9 @@ Bluetooth, the same way the Sony Sound Connect phone app does. Switch noise canc
 equalizer, check the battery or remap the touch controls from your PC, a keyboard shortcut or the
 command line.
 
+Looking for **Sony Sound Connect (formerly Headphones Connect) on PC**? Sony only makes the app for
+phones. Resonance brings its settings to Windows 10 and 11, with no emulator and no phone.
+
 ![Resonance main window](docs/images/sound.png)
 
 *[Version française](README.fr.md)*
