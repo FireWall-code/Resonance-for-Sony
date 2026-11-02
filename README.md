@@ -66,6 +66,18 @@ Closing the window keeps Resonance in the notification area: left-click the icon
 modes, double-click to open it. Run `Resonance.exe --background` to start minimized (useful in the
 Startup folder).
 
+## Using Sound Connect on your phone too
+
+Headphones accept one control app at a time. Resonance lets go of them after a few minutes without use
+(Settings → Sharing with your phone) and takes them back as soon as you open the window, press a shortcut or
+run a command. **Let the phone take over** in Settings or the notification area menu frees them right away, until
+you choose **Take back control**. On the command line: `resonance-cli release` and `resonance-cli resume`.
+
+## Your own picture and animation
+
+Settings → Appearance can replace the drawing of your headphones with a picture of your choice, and play a folder
+of numbered PNG images when they connect. These files stay on your PC.
+
 ## Keyboard shortcuts
 
 In **Keyboard shortcuts**, click a box and press a combination (Ctrl, Alt, Shift or Win + a key; F1-F24

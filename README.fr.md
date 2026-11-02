@@ -53,6 +53,18 @@ lancement, SmartScreen peut demander une confirmation (« Informations compléme
 
 La langue suit celle de Windows ; elle se change dans Paramètres → Langue.
 
+## Utiliser aussi Sound Connect sur le téléphone
+
+Le casque n'accepte qu'une appli de contrôle à la fois. Resonance le lâche après quelques minutes sans utilisation
+(Paramètres → Partage avec le téléphone) et le reprend dès que vous ouvrez la fenêtre, pressez un raccourci ou lancez
+une commande. **Laisser la main au téléphone**, dans Paramètres ou le menu de l'icône, le libère tout de suite, jusqu'à
+ce que vous choisissiez **Reprendre la main**. En ligne de commande : `resonance-cli liberer` et `resonance-cli reprendre`.
+
+## Votre image et votre animation
+
+Paramètres → Apparence permet de remplacer le dessin du casque par l'image de votre choix, et de jouer un dossier
+d'images PNG numérotées à la connexion. Ces fichiers restent sur votre PC.
+
 ## Ligne de commande
 
 ```text
