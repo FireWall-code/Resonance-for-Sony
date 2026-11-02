@@ -398,7 +398,7 @@
                             <TextBlock Text="{local:L share.title}" Style="{StaticResource CardTitle}" />
                             <DockPanel Style="{StaticResource Row}">
                                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <ComboBox Width="110" ItemsSource="{x:Static local:MainViewModel.IdleDelays}" SelectedItem="{Binding SelectedIdleDelay}"
+                                    <ComboBox Width="160" ItemsSource="{x:Static local:MainViewModel.IdleDelays}" SelectedItem="{Binding SelectedIdleDelay}"
                                               IsEnabled="{Binding ReleaseWhenIdle}" Margin="0,0,12,0" />
                                     <CheckBox IsChecked="{Binding ReleaseWhenIdle}" VerticalAlignment="Center" />
                                 </StackPanel>

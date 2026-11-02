@@ -42,9 +42,16 @@ Include your headphones model and firmware, your Windows version, what you did a
 
 ## Code
 
-To refresh the screenshots in `docs/images`, run the app with your headphones connected, then
-`resonance-cli __screenshot docs/images`: every page is rendered off-screen (the window does not
-appear), with sample track and device names instead of yours.
+To refresh the README images, run the app in English with your headphones connected, then:
+
+```text
+resonance-cli __screenshot <repo>/docs/images dark
+resonance-cli __screenshot <repo>/docs/images/light light
+powershell -ExecutionPolicy Bypass -File docs/make-readme-art.ps1
+```
+
+Every page is rendered off-screen (the window does not appear), with sample track, device and battery values and
+never your own picture or animation.
 
 - C# / .NET 10, WPF with the Fluent theme. Match the style of the surrounding code.
 - Protocol changes belong in `src/Resonance.Core`; document new commands in `docs/PROTOCOL.md` with

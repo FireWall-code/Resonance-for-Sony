@@ -56,9 +56,9 @@ public partial class App : Application
         if (args.FirstOrDefault() == "__ping") return CommandResult.Done("pong");
         // Shows the connection card now (resonance-cli __card), as the Preview button does.
         if (args.FirstOrDefault() == "__card") { await Dispatcher.InvokeAsync(() => ShowConnectionCard(force: true)); return CommandResult.Done("ok"); }
-        // Documentation screenshots, rendered off-screen: resonance-cli __screenshot <folder>
+        // Documentation screenshots, rendered off-screen: resonance-cli __screenshot <folder> [light|dark]
         if (args.FirstOrDefault() == "__screenshot")
-            return CommandResult.Done(await Dispatcher.InvokeAsync(() => _window!.RenderPages(args.ElementAtOrDefault(1) ?? ".")));
+            return CommandResult.Done(await Dispatcher.InvokeAsync(() => _window!.RenderPages(args.ElementAtOrDefault(1) ?? ".", args.ElementAtOrDefault(2))));
         if (_vm is null) return CommandResult.Waiting(T("cli.notconnected", ""));
         // resonance-cli release / resume: hand the headphones to the phone app and take them back.
         switch (args.FirstOrDefault()?.ToLowerInvariant())

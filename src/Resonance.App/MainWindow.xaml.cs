@@ -3,10 +3,12 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Size = System.Windows.Size;
@@ -71,10 +73,24 @@ public partial class MainWindow : Window
     /// Renders every page to PNG files in <paramref name="folder"/> without showing the window
     /// (no focus change, so it can run while a game or another app is in front).
     /// </summary>
-    public string RenderPages(string folder)
+    public string RenderPages(string folder, string? theme = null)
     {
         Directory.CreateDirectory(folder);
+        if (theme is "light" or "dark")
+        {
+            Application.Current.ThemeMode = theme == "light" ? ThemeMode.Light : ThemeMode.Dark;
+            Dispatcher.Invoke(() => { }, DispatcherPriority.Background); // let the theme resources apply
+        }
+        try { return RenderAll(folder); }
+        finally { if (theme is "light" or "dark") Application.Current.ThemeMode = ThemeMode.System; }
+    }
+
+    private string RenderAll(string folder)
+    {
         var root = (FrameworkElement)Content;
+        // A window that was never shown does not pass its theme text colour down to its content.
+        var text = TryFindResource("TextFillColorPrimaryBrush") as Brush ?? Brushes.Black;
+        TextElement.SetForeground(root, text);
         var size = new Size(Width, Height - 32);
         const double scale = 1.5;
         var background = TryFindResource("SolidBackgroundFillColorBaseBrush") as Brush ?? Brushes.White;
@@ -98,6 +114,7 @@ public partial class MainWindow : Window
             png.Save(file);
         }
         Nav.SelectedIndex = previous;
+        root.ClearValue(TextElement.ForegroundProperty);
         RenderCard(Path.Combine(folder, "card.png"), scale);
         return $"{PageNames.Length + 1} images rendered to {folder}";
     }

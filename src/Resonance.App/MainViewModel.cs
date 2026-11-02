@@ -979,6 +979,10 @@ public sealed class MainViewModel : ObservableObject
     internal IDisposable DocumentationPreview()
     {
         var (title, artist, devices) = (TrackTitle, TrackArtist, PairedDevices);
+        var (single, left, right, box) = (Battery, BatteryLeft, BatteryRight, BatteryCase);
+        if (left is not null) { BatteryLeft = new(82, ChargingStatus.NotCharging); BatteryRight = new(76, ChargingStatus.NotCharging); }
+        if (box is not null) BatteryCase = new(64, ChargingStatus.NotCharging);
+        if (single is not null) Battery = new(82, ChargingStatus.NotCharging);
         _documentation = true;
         Raise(nameof(DevicePicture));
         TrackTitle = "Midnight Drive";
@@ -992,6 +996,7 @@ public sealed class MainViewModel : ObservableObject
         return new Restore(() =>
         {
             TrackTitle = title; TrackArtist = artist; PairedDevices = devices;
+            Battery = single; BatteryLeft = left; BatteryRight = right; BatteryCase = box;
             _documentation = false;
             Raise(nameof(DevicePicture));
         });
