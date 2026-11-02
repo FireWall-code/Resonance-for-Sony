@@ -40,6 +40,12 @@ A recorded session is a folder of `.bin` files, one MDR frame each (the format o
 Include your headphones model and firmware, your Windows version, what you did and what happened.
 `resonance-cli json` prints the full state the app reads from the headphones.
 
+## License of contributions
+
+Resonance is under the [PolyForm Noncommercial License 1.0.0](LICENSE). By contributing, you confirm that you may
+submit your work, and you allow the author to distribute it under that license and under other terms, including in
+paid versions of Resonance.
+
 ## Code
 
 To refresh the README images, run the app in English with your headphones connected, then:

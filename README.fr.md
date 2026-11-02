@@ -11,7 +11,7 @@
   <img alt="Windows 10 et 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4">
   <img alt="Anglais et français" src="https://img.shields.io/badge/langues-EN%20%7C%20FR-06b6d4">
-  <a href="LICENSE"><img alt="Licence" src="https://img.shields.io/badge/licence-GPL--3.0-f59e0b"></a>
+  <a href="LICENSE"><img alt="Licence" src="https://img.shields.io/badge/licence-PolyForm_Noncommercial-f59e0b"></a>
 </p>
 
 <p align="center">
@@ -183,4 +183,7 @@ des marques de Sony Group Corporation. Le protocole a été documenté à des fi
 
 ## Licence 📜
 
-[GPL-3.0](LICENSE)
+Gratuit pour un usage personnel et tout autre usage non commercial, sous [licence PolyForm Noncommercial 1.0.0](LICENSE).
+L'usage commercial, y compris la vente de Resonance ou d'une copie modifiée, n'est pas couvert et demande l'accord de l'auteur.
+
+Les versions jusqu'à la 1.1.0 ont été publiées sous GPL-3.0 et restent disponibles sous cette licence.
