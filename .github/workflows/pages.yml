@@ -30,3 +30,13 @@ jobs:
           path: site
       - id: deployment
         uses: actions/deploy-pages@v4
+      # Tells search engines that support IndexNow, such as Bing, that the pages changed.
+      - name: Notify IndexNow
+        continue-on-error: true
+        run: |
+          curl -sS -X POST https://api.indexnow.org/indexnow -H "Content-Type: application/json" -d '{
+            "host": "firewall-code.github.io",
+            "key": "f117e39b5c4baedb434f7ef515ab9188",
+            "keyLocation": "https://firewall-code.github.io/Resonance-for-Sound-Connect/f117e39b5c4baedb434f7ef515ab9188.txt",
+            "urlList": ["https://firewall-code.github.io/Resonance-for-Sound-Connect/", "https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/", "https://firewall-code.github.io/Resonance-for-Sound-Connect/llms.txt"]
+          }'

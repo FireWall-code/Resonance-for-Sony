@@ -178,6 +178,12 @@ Windows indépendante qui apporte ses principaux réglages sur votre PC.
 Non. Resonance est une appli Windows native qui parle au casque en Bluetooth. Il ne faut ni émulateur, ni téléphone,
 ni compte Sony.
 
+**Quelles sont les alternatives à Sound Connect sur PC ?**
+L'appli du téléphone, un émulateur Android ou une appli PC indépendante. En plus de Resonance, il existe
+[SonyHeadphonesClient](https://github.com/mos9527/SonyHeadphonesClient), Sony Device Center, Sony Companion App et
+XMCompanion ; leurs fonctions et modèles pris en charge diffèrent. Resonance ajoute des raccourcis clavier globaux, une
+ligne de commande, le réglage des commandes tactiles et le changement d'appareil multipoint.
+
 **Est-ce que ça marche avec les WH-1000XM5, WH-1000XM4 ou WF-1000XM5 ?**
 Les WF-1000XM6 sont testés à fond, les WF-1000XM5 ont été contrôlés sur des sessions enregistrées, et les WH-1000XM4
 et WH-1000XM5 utilisent les mêmes protocoles sans être encore confirmés. Voir [Casques pris en charge](#casques-pris-en-charge-).

@@ -9,6 +9,7 @@
 <link rel="alternate" hreflang="en" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/">
 <link rel="alternate" hreflang="fr" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/">
 <link rel="alternate" hreflang="x-default" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/">
+<link rel="alternate" type="text/plain" href="llms.txt" title="Summary for AI tools">
 <link rel="icon" href="favicon.ico">
 <link rel="stylesheet" href="style.css">
 <link rel="preload" as="image" href="images/hero.webp" fetchpriority="high">
@@ -34,7 +35,30 @@
   "downloadUrl": "https://github.com/FireWall-code/Resonance-for-Sound-Connect/releases/latest/download/Resonance-win-x64.zip",
   "screenshot": "https://firewall-code.github.io/Resonance-for-Sound-Connect/images/hero.webp",
   "license": "https://polyformproject.org/licenses/noncommercial/1.0.0/",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "softwareVersion": "1.2.0",
+  "dateModified": "2026-11-04",
+  "author": {
+    "@type": "Organization",
+    "name": "FireWall-code",
+    "url": "https://github.com/FireWall-code"
+  },
+  "sameAs": [
+    "https://github.com/FireWall-code/Resonance-for-Sound-Connect"
+  ],
+  "featureList": [
+    "Noise cancelling and ambient sound control",
+    "Equalizer presets and custom curves",
+    "Battery of each earbud, the case or the headband",
+    "Global keyboard shortcuts",
+    "Touch control settings",
+    "Multipoint device switching and playback pinning",
+    "Command line"
+  ]
 }
 </script>
 <script type="application/ld+json">
@@ -42,13 +66,78 @@
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    { "@type": "Question", "name": "Is there a Sony Sound Connect app for PC?", "acceptedAnswer": { "@type": "Answer", "text": "Sony publishes Sound Connect, formerly Headphones Connect, for Android and iPhone only. Resonance is an independent Windows app that brings its main settings to your PC." } },
-    { "@type": "Question", "name": "Do I need BlueStacks or another Android emulator?", "acceptedAnswer": { "@type": "Answer", "text": "No. Resonance is a native Windows app that talks to the headphones over Bluetooth. You do not need an emulator, a phone or a Sony account." } },
-    { "@type": "Question", "name": "Which Sony headphones work with Resonance?", "acceptedAnswer": { "@type": "Answer", "text": "Every setting has been tested on the WF-1000XM6. The WF-1000XM5, LinkBuds Clip and WH-1000XM3 were checked against recorded sessions. The WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N and other LinkBuds use the same protocols and should work, but are not confirmed yet." } },
-    { "@type": "Question", "name": "Is Resonance free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, for personal and other noncommercial use, under the PolyForm Noncommercial License 1.0.0. The source code is public on GitHub. Commercial use needs the author's permission." } },
-    { "@type": "Question", "name": "Can I keep Sound Connect on my phone?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Headphones accept one control app at a time, so Resonance lets go of them after a few minutes without use and takes them back when you need it. You can also hand them to the phone right away." } },
-    { "@type": "Question", "name": "Can Resonance update the firmware?", "acceptedAnswer": { "@type": "Answer", "text": "No. Firmware files come from Sony's servers, so keep using the phone app for updates." } },
-    { "@type": "Question", "name": "Why does Windows show a SmartScreen warning?", "acceptedAnswer": { "@type": "Answer", "text": "The app is not code-signed yet. Choose More info, then Run anyway. The source code and the build workflow are public on GitHub." } }
+    {
+      "@type": "Question",
+      "name": "Is there a Sony Sound Connect app for PC?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sony publishes Sound Connect, formerly Headphones Connect, for Android and iPhone only. Resonance is an independent Windows app that brings its main settings to your PC."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the alternatives to Sound Connect on PC?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You can use the phone app, run it in an Android emulator, or use an independent PC app. Besides Resonance, these include SonyHeadphonesClient, Sony Device Center, Sony Companion App and XMCompanion; their features and supported models differ. Resonance adds global keyboard shortcuts, a command line, touch control settings and multipoint device switching."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I change noise cancelling on Sony headphones from Windows?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pair the headphones in Windows, open Resonance and click its icon in the notification area, then choose noise cancelling, ambient sound or off. You can also set a keyboard shortcut or run resonance-cli nc in a terminal."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need BlueStacks or another Android emulator?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Resonance is a native Windows app that talks to the headphones over Bluetooth. You do not need an emulator, a phone or a Sony account."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which Sony headphones work with Resonance?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Every setting has been tested on the WF-1000XM6. The WF-1000XM5, LinkBuds Clip and WH-1000XM3 were checked against recorded sessions. The WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N and other LinkBuds use the same protocols and should work, but are not confirmed yet."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Resonance free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, for personal and other noncommercial use, under the PolyForm Noncommercial License 1.0.0. The source code is public on GitHub. Commercial use needs the author's permission."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I keep Sound Connect on my phone?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Headphones accept one control app at a time, so Resonance lets go of them after a few minutes without use and takes them back when you need it. You can also hand them to the phone right away."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can Resonance update the firmware?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Firmware files come from Sony's servers, so keep using the phone app for updates."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Windows show a SmartScreen warning?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The app is not code-signed yet. Choose More info, then Run anyway. The source code and the build workflow are public on GitHub."
+      }
+    }
   ]
 }
 </script>
@@ -192,7 +281,7 @@ resonance-cli connect phone</code></pre>
         <li><b>Unzip</b>Download the zip and unzip it anywhere. There is nothing to install.</li>
         <li><b>Run</b>Open Resonance.exe. It finds your headphones by itself.</li>
       </ol>
-      <p class="note">Requires Windows 10 (1809) or later. The app is not code-signed yet, so SmartScreen may ask you to confirm the first launch.</p>
+      <p class="note">Latest version: 1.2.0, November 2026. Requires Windows 10 (1809) or later. The app is not code-signed yet, so SmartScreen may ask you to confirm the first launch.</p>
     </div>
   </section>
 
@@ -201,6 +290,8 @@ resonance-cli connect phone</code></pre>
       <h2>Frequently asked questions</h2>
       <div class="faq">
         <details open><summary>Is there a Sony Sound Connect app for PC?</summary><p>Sony publishes Sound Connect, formerly Headphones Connect, for Android and iPhone only. Resonance is an independent Windows app that brings its main settings to your PC.</p></details>
+        <details><summary>What are the alternatives to Sound Connect on PC?</summary><p>You can use the phone app, run it in an Android emulator, or use an independent PC app. Besides Resonance, these include SonyHeadphonesClient, Sony Device Center, Sony Companion App and XMCompanion; their features and supported models differ. Resonance adds global keyboard shortcuts, a command line, touch control settings and multipoint device switching.</p></details>
+        <details><summary>How do I change noise cancelling on Sony headphones from Windows?</summary><p>Pair the headphones in Windows, open Resonance and click its icon in the notification area, then choose noise cancelling, ambient sound or off. You can also set a keyboard shortcut or run resonance-cli nc in a terminal.</p></details>
         <details><summary>Do I need BlueStacks or another Android emulator?</summary><p>No. Resonance is a native Windows app that talks to the headphones over Bluetooth. You do not need an emulator, a phone or a Sony account.</p></details>
         <details><summary>Which Sony headphones work with Resonance?</summary><p>Every setting has been tested on the WF-1000XM6. The WF-1000XM5, LinkBuds Clip and WH-1000XM3 were checked against recorded sessions. The WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N and other LinkBuds use the same protocols and should work, but are not confirmed yet.</p></details>
         <details><summary>Is Resonance free?</summary><p>Yes, for personal and other noncommercial use, under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The source code is public on GitHub. Commercial use needs the author's permission.</p></details>

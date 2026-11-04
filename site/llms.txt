@@ -1,0 +1,32 @@
+# Resonance
+
+> Resonance is a free, independent Windows app that controls Sony headphones over Bluetooth, without a phone or an Android emulator. It is not made by or affiliated with Sony. Sony publishes its own app, Sound Connect (formerly Headphones Connect), for Android and iPhone only.
+
+Latest version: 1.2.0 (November 2026). Runs on Windows 10 (1809) or later and Windows 11. Available in English and French. Free for personal and other noncommercial use under the PolyForm Noncommercial License 1.0.0; the source code is public.
+
+## Features
+
+- Noise cancelling, ambient sound with level and voice focus, off
+- Equalizer presets and custom curves, with the bands the model offers
+- Battery of each earbud, the case or the headband
+- Global keyboard shortcuts for noise modes
+- Touch control presets, gestures, quick access and head gestures
+- Multipoint device switching and playback pinning
+- DSEE Extreme, connection priority, background music, voice boost, live sound level
+- Quick settings from the notification area icon, and a command line (resonance-cli)
+
+It does not update firmware; that still needs Sony's phone app.
+
+## Supported headphones
+
+- Every setting tested on the device: WF-1000XM6
+- Checked against recorded sessions, changing settings not yet confirmed by an owner: WF-1000XM5, LinkBuds Clip, WH-1000XM3
+- Same protocols, should work, not confirmed yet: WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N, other LinkBuds
+
+## Links
+
+- [Website](https://firewall-code.github.io/Resonance-for-Sound-Connect/): features, install steps and FAQ
+- [Site en français](https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/)
+- [Download](https://github.com/FireWall-code/Resonance-for-Sound-Connect/releases/latest/download/Resonance-win-x64.zip): zip for Windows x64, nothing to install
+- [Source code](https://github.com/FireWall-code/Resonance-for-Sound-Connect)
+- [Protocol documentation](https://github.com/FireWall-code/Resonance-for-Sound-Connect/blob/main/docs/PROTOCOL.md)
