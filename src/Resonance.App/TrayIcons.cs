@@ -3,27 +3,25 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.Win32;
 
 namespace Resonance.App;
 
 public enum TrayState { Disconnected, NoiseCancelling, Ambient, Off }
 
 /// <summary>
-/// Notification area icons, one per state, told apart by colour and shape: blue with filled ear cups for noise
-/// cancelling, green with open ear cups for ambient sound, the white logo for off, and a crossed-out outline
-/// when disconnected. At 100 % scaling these are only 16 pixels wide, so every edge is snapped to the pixel grid.
+/// Notification area icons: the app logo itself, of which only the background colour changes with the state.
+/// White (the logo as it is) for off, blue for noise cancelling, green for ambient sound, grey when disconnected.
 /// </summary>
 internal static class TrayIcons
 {
-    private static readonly Dictionary<(TrayState, bool, int), Icon> Cache = [];
+    private static readonly Dictionary<(TrayState, int), Icon> Cache = [];
 
     public static Icon Get(TrayState state)
     {
-        var key = (state, LightTaskbar(), IconSize());
+        var key = (state, IconSize());
         if (!Cache.TryGetValue(key, out var icon))
         {
-            using var bmp = Draw(state, key.Item2, key.Item3);
+            using var bmp = Draw(state, key.Item2);
             icon = ToIcon(bmp);
             Cache[key] = icon;
         }
@@ -36,89 +34,66 @@ internal static class TrayIcons
 
     private static int IconSize() => Math.Max(16, GetSystemMetricsForDpi(SmallIconWidth, GetDpiForSystem()));
 
-    private static bool LightTaskbar() =>
-        Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "SystemUsesLightTheme", 0) is 1;
-
     /// <summary>The icon as a bitmap (documentation and checks).</summary>
-    public static Bitmap Draw(TrayState state, bool lightTaskbar, int size)
+    public static Bitmap Draw(TrayState state, int size)
     {
-        var bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
-        using var g = Graphics.FromImage(bmp);
-        g.SmoothingMode = SmoothingMode.AntiAlias;
-        g.PixelOffsetMode = PixelOffsetMode.Half; // whole coordinates fall exactly on pixel edges
-
-        var (tile, glyph) = state switch
+        var bmp = LoadLogo(size);
+        var background = state switch
         {
-            TrayState.NoiseCancelling => (Color.FromArgb(37, 99, 235), Color.White),
-            TrayState.Ambient => (Color.FromArgb(4, 130, 92), Color.White),
-            TrayState.Off => (Color.FromArgb(248, 248, 248), Color.FromArgb(20, 20, 20)),
-            _ => (Color.Transparent, lightTaskbar ? Color.FromArgb(60, 60, 60) : Color.FromArgb(205, 205, 205)),
+            TrayState.NoiseCancelling => Color.FromArgb(79, 155, 255),
+            TrayState.Ambient => Color.FromArgb(47, 208, 127),
+            TrayState.Disconnected => Color.FromArgb(140, 140, 140),
+            _ => Color.White,
         };
-        // Sizes come from a 16-pixel design, rounded to whole pixels; the right side mirrors the left.
-        int Px(float v) => (int)Math.Round(v * size / 16f, MidpointRounding.AwayFromZero);
-
-        if (state != TrayState.Disconnected)
-        {
-            using var path = Rounded(0, 0, size, size, Px(3));
-            using var fill = new SolidBrush(tile);
-            g.FillPath(fill, path);
-        }
-
-        int stroke = Math.Max(1, Px(1.25f));
-        int side = Px(2), cupWidth = Px(4), cupTop = Px(8), bottom = size - Px(2);
-        using var brush = new SolidBrush(glyph);
-        // A curve loses strength when smoothed: a slightly wider pen keeps it as solid as the straight edges.
-        using var pen = new Pen(glyph, stroke + 0.4f);
-
-        // Headband: half a circle from one ear cup to the other.
-        float band = side + stroke / 2f, diameter = size - 2 * band;
-        g.DrawArc(pen, band, Px(2) + stroke / 2f, diameter, diameter, 180, 180);
-        float bandEnd = Px(2) + stroke / 2f + diameter / 2;
-        if (bandEnd < cupTop)
-        {
-            g.FillRectangle(brush, side, bandEnd, stroke, cupTop - bandEnd);
-            g.FillRectangle(brush, size - side - stroke, bandEnd, stroke, cupTop - bandEnd);
-        }
-
-        // Ear cups: filled, except ambient sound, which opens them.
-        foreach (int x in new[] { side, size - side - cupWidth })
-        {
-            using var cup = Rounded(x, cupTop, cupWidth, bottom - cupTop, Math.Max(1, Px(1)) * 0.7f);
-            g.FillPath(brush, cup);
-            if (state == TrayState.Ambient)
-            {
-                using var open = new SolidBrush(tile);
-                g.FillRectangle(open, x + stroke, cupTop + stroke, cupWidth - 2 * stroke, bottom - cupTop - 2 * stroke);
-            }
-        }
-
-        if (state == TrayState.Disconnected) Slash(g, brush, size, stroke, Px(1));
+        Tint(bmp, background);
         return bmp;
     }
 
-    /// <summary>A pixel-exact diagonal, with a clear line beside it so it stands out from the headphones.</summary>
-    private static void Slash(Graphics g, Brush brush, int size, int stroke, int margin)
+    /// <summary>The logo, scaled to this size.</summary>
+    private static Bitmap LoadLogo(int size)
     {
-        g.SmoothingMode = SmoothingMode.None;
-        g.CompositingMode = CompositingMode.SourceCopy;
-        using (var clear = new SolidBrush(Color.Transparent))
-            for (int i = margin; i < size - margin; i++)
-                g.FillRectangle(clear, i, i + stroke, stroke, stroke);
-        g.CompositingMode = CompositingMode.SourceOver;
-        for (int i = margin; i < size - margin - stroke + 1; i++)
-            g.FillRectangle(brush, i, i, stroke, stroke);
+        using var resource = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/resonance.ico")).Stream;
+        using var file = new MemoryStream();
+        resource.CopyTo(file);
+        var ico = file.ToArray();
+
+        var entries = Enumerable.Range(0, BitConverter.ToUInt16(ico, 4)).Select(i => 6 + 16 * i).Select(e => (
+            Size: ico[e] == 0 ? 256 : (int)ico[e],
+            Length: BitConverter.ToInt32(ico, e + 8),
+            Offset: BitConverter.ToInt32(ico, e + 12))).ToList();
+        // A large entry reduced stays regular, where the small ones have uneven lines.
+        var entry = entries.Where(e => e.Size >= 4 * size).OrderBy(e => e.Size).FirstOrDefault();
+        if (entry.Size == 0) entry = entries.MaxBy(e => e.Size);
+
+        using var image = new MemoryStream(ico, entry.Offset, entry.Length);
+        using var logo = new Bitmap(image);
+        var bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        using var g = Graphics.FromImage(bmp);
+        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+        g.DrawImage(logo, 0, 0, size, size);
+        return bmp;
     }
 
-    private static GraphicsPath Rounded(float x, float y, float w, float h, float r)
+    /// <summary>
+    /// Multiplies by the colour: the white background takes it, the black headphones stay black. The levels are
+    /// stretched first, because at 16 pixels the thin lines of the logo otherwise come out light grey.
+    /// </summary>
+    private static void Tint(Bitmap bmp, Color color)
     {
-        var p = new GraphicsPath();
-        float d = 2 * r;
-        p.AddArc(x, y, d, d, 180, 90);
-        p.AddArc(x + w - d, y, d, d, 270, 90);
-        p.AddArc(x + w - d, y + h - d, d, d, 0, 90);
-        p.AddArc(x, y + h - d, d, d, 90, 90);
-        p.CloseFigure();
-        return p;
+        var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+        var pixels = new byte[data.Stride * bmp.Height];
+        Marshal.Copy(data.Scan0, pixels, 0, pixels.Length);
+        for (int i = 0; i < pixels.Length; i += 4)
+        {
+            // Logo pixels are shades of grey between its white background and its black headphones.
+            float level = Math.Clamp((pixels[i + 1] / 255f - 0.35f) / 0.55f, 0, 1);
+            pixels[i] = (byte)(color.B * level);
+            pixels[i + 1] = (byte)(color.G * level);
+            pixels[i + 2] = (byte)(color.R * level);
+        }
+        Marshal.Copy(pixels, 0, data.Scan0, pixels.Length);
+        bmp.UnlockBits(data);
     }
 
     /// <summary>

@@ -93,7 +93,7 @@ confirmation (**Informations complémentaires → Exécuter quand même**).
 
 Fermer la fenêtre garde Resonance près de l'horloge : un clic sur l'icône ouvre les réglages rapides (mode, égaliseur, épinglage de la
 lecture), un clic droit ouvre le menu. L'icône indique le mode en cours : bleue pour la réduction de bruit, verte pour
-le son ambiant, blanche pour désactivé, et barrée quand le casque est déconnecté.
+le son ambiant, blanche pour désactivé, et grise quand le casque est déconnecté.
 
 ## Bon à savoir 💡
 

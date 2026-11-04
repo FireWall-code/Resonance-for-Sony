@@ -60,12 +60,11 @@ public partial class App : Application
         {
             var folder = args.ElementAtOrDefault(1) ?? ".";
             foreach (var state in Enum.GetValues<TrayState>())
-                foreach (var dark in new[] { false, true })
-                    foreach (var size in new[] { 16, 20, 24, 32 })
-                    {
-                        using var bmp = TrayIcons.Draw(state, !dark, size);
-                        bmp.Save(System.IO.Path.Combine(folder, $"{state}-{(dark ? "dark" : "light")}-{size}.png"));
-                    }
+                foreach (var size in new[] { 16, 20, 24, 32 })
+                {
+                    using var bmp = TrayIcons.Draw(state, size);
+                    bmp.Save(System.IO.Path.Combine(folder, $"{state}-{size}.png"));
+                }
             return CommandResult.Done(folder);
         }
         // Toggles the quick panel, as a click on the icon does.
