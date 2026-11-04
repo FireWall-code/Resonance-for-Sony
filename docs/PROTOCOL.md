@@ -92,6 +92,7 @@ this is how an app adapts its UI to each model.
 | Remembered devices | T2 `36 02` | — | `<n> (<MAC 17 B> <state> <CoD×3> <len> <name>)×n` | Device |
 | Connect / disconnect / forget | — | T2 `3C 02` | `<01 / 00 / 02> <ASCII MAC 17 B>` → `3D 02 <action> <result> <MAC>` | Device |
 | Switch audio source | — | T2 `3C 01` | `<ASCII MAC 17 B>` → `3D 01 <result> <MAC>` | App |
+| Pin playback (function `31`) | T2 `36 01` → `37 01 <00 pinned / 01 free>` | T2 `38 01 <v>` | `39 01 <v> <result>` (00 success, 01 fail, 02 in a call, 03 no A2DP, 04 voice assistant) | App, CLI |
 | Pairing mode | — | T2 `34 02` | `01 00` | App |
 | Earbud fit test | — | `F4 06 <01 enter/00 leave> 00`, then `F8 06 <00 start/01 cancel> 00 FF FF` | progress `F9 06 <state> <error> …`, result `FD 06 <L 00=good> <R> …` | Tested |
 | Power off | — | `24 03 01` | | App |

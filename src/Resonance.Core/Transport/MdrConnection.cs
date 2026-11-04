@@ -91,32 +91,45 @@ public sealed class MdrConnection : IAsyncDisposable
     }
 
     /// <summary>
-    /// Waits until the headphones connect to this PC (Windows notifies it), or <paramref name="timeout"/>.
-    /// Costs nothing while waiting, unlike retrying a connection.
+    /// Calls <paramref name="changed"/> when Windows reports that the headphones connected to or left this PC.
+    /// No polling and no Bluetooth traffic. Dispose the result to stop. Null when the device is unknown.
     /// </summary>
-    public static async Task WaitForDeviceAsync(ulong address, TimeSpan timeout, CancellationToken ct = default)
+    public static async Task<IDisposable?> WatchDeviceAsync(ulong address, Action<bool> changed)
     {
-        BluetoothDevice? device = null;
+        BluetoothDevice? device;
         try { device = await BluetoothDevice.FromBluetoothAddressAsync(address); }
-        catch (Exception) { /* not paired any more: plain wait */ }
-        if (device is null) { await Task.Delay(timeout, ct); return; }
-        using (device)
+        catch (Exception) { return null; }
+        if (device is null) return null;
+        void OnChanged(BluetoothDevice d, object _) => changed(d.ConnectionStatus == BluetoothConnectionStatus.Connected);
+        device.ConnectionStatusChanged += OnChanged;
+        return new DeviceWatch(device, OnChanged);
+    }
+
+    private sealed class DeviceWatch(BluetoothDevice device, Windows.Foundation.TypedEventHandler<BluetoothDevice, object> handler) : IDisposable
+    {
+        public void Dispose()
         {
-            var connected = new TaskCompletionSource();
-            void OnChanged(BluetoothDevice d, object _)
-            {
-                if (d.ConnectionStatus == BluetoothConnectionStatus.Connected) connected.TrySetResult();
-            }
-            device.ConnectionStatusChanged += OnChanged;
-            try { await Task.WhenAny(connected.Task, Task.Delay(timeout, ct)); }
-            finally { device.ConnectionStatusChanged -= OnChanged; }
+            device.ConnectionStatusChanged -= handler;
+            device.Dispose();
         }
+    }
+
+    /// <summary>Whether Windows currently has a Bluetooth link with the headphones.</summary>
+    public static async Task<bool> IsDeviceConnectedAsync(ulong address)
+    {
+        try
+        {
+            using var device = await BluetoothDevice.FromBluetoothAddressAsync(address);
+            return device?.ConnectionStatus == BluetoothConnectionStatus.Connected;
+        }
+        catch (Exception) { return false; }
     }
 
     public static async Task<MdrConnection> ConnectAsync(ulong address, CancellationToken ct = default)
     {
         var conn = new MdrConnection(address);
-        await conn.OpenAsync(ct);
+        try { await conn.OpenAsync(ct); }
+        catch { await conn.DisposeAsync(); throw; }
         return conn;
     }
 

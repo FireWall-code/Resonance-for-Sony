@@ -55,6 +55,7 @@ public static class CommandRunner
         "next" or "suivant" => "next",
         "prev" or "previous" or "precedent" => "prev",
         "devices" or "appareils" => "devices",
+        "pin" or "epingler" => "pin",
         "connect" or "connecter" => "connect",
         "disconnect" or "deconnecter" => "disconnect",
         "poweroff" or "eteindre" => "poweroff",
@@ -70,7 +71,7 @@ public static class CommandRunner
         "eq" => ReadGroup.Equalizer,
         "dsee" or "bgm" => ReadGroup.Audio,
         "volume" => ReadGroup.Playback,
-        "devices" or "connect" or "disconnect" => ReadGroup.Devices,
+        "devices" or "connect" or "disconnect" or "pin" => ReadGroup.Devices,
         _ => ReadGroup.None,
     };
 
@@ -121,6 +122,14 @@ public static class CommandRunner
                 bool on = ParseOnOff(a1);
                 await hp.SetDseeAsync(on);
                 return await Confirm(() => s.Dsee == on, T("cli.dsee", OnOffWord(on)));
+            }
+            case "pin":
+            {
+                if (s.PlaybackPinned is null) throw new UsageException(T("cli.pin.unavailable"));
+                if (a1 is null) return T("cli.pin", OnOffWord(s.PlaybackPinned.Value));
+                bool on = ParseOnOff(a1);
+                await hp.SetPlaybackPinnedAsync(on);
+                return await Confirm(() => s.PlaybackPinned == on, T("cli.pin", OnOffWord(on)));
             }
             case "bgm":
             {

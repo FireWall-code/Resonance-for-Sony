@@ -164,7 +164,7 @@ public sealed class MainViewModel : ObservableObject
         NextCommand = new RelayCommand(() => Send(hp => hp.SendPlaybackAsync(PlaybackControl.Next)));
         PreviousCommand = new RelayCommand(() => Send(hp => hp.SendPlaybackAsync(PlaybackControl.Previous)));
         PowerOffCommand = new RelayCommand(PowerOffAsync);
-        ReconnectCommand = new RelayCommand(() => ConnectLoopAsync());
+        ReconnectCommand = new RelayCommand(() => ConnectAsync(discover: true));
         var idleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
         idleTimer.Tick += async (_, _) => await CheckIdleAsync();
         idleTimer.Start();
@@ -187,63 +187,115 @@ public sealed class MainViewModel : ObservableObject
 
     // ------------------------------------------------------------ connection
 
-    private string _status = T("status.searching");
+    private string _status = T("status.disconnected");
     private bool _isConnected;
-    public string Status { get => _status; private set => SetField(ref _status, value); }
-    public bool IsConnected { get => _isConnected; private set => SetField(ref _isConnected, value); }
+    public string Status
+    {
+        get => _status;
+        private set { if (SetField(ref _status, value)) Raise(nameof(BatterySummary)); }
+    }
+    public bool IsConnected
+    {
+        get => _isConnected;
+        private set { if (SetField(ref _isConnected, value)) { Raise(nameof(CanReconnect)); Raise(nameof(BatterySummary)); } }
+    }
 
     private int _connecting;
-    public async Task ConnectLoopAsync()
+    private bool _isConnecting;
+    public bool IsConnecting
     {
-        if (Interlocked.Exchange(ref _connecting, 1) == 1) return;
-        int attempt = 0;
+        get => _isConnecting;
+        private set { if (SetField(ref _isConnecting, value)) Raise(nameof(CanReconnect)); }
+    }
+    /// <summary>Nothing is connected or connecting, and the user can ask for a connection.</summary>
+    public bool CanReconnect => !_isConnected && !_isConnecting && !_paused && !_idle;
+
+    /// <summary>
+    /// One connection attempt, then "Disconnected": Resonance does not keep looking for the headphones. It
+    /// connects again when Windows reports them, or when the user asks (button, shortcut, command).
+    /// </summary>
+    /// <param name="discover">Also try the other paired headphones (costly, only on request).</param>
+    public async Task ConnectAsync(bool discover = false)
+    {
+        if (!_ui.CheckAccess())
+        {
+            await _ui.InvokeAsync(() => ConnectAsync(discover)).Task.Unwrap();
+            return;
+        }
+        if (_closing || _hp is not null || _paused || _idle) return;
+        if (Interlocked.Exchange(ref _connecting, 1) == 1)
+        {
+            while (Volatile.Read(ref _connecting) == 1) await Task.Delay(100);
+            return;
+        }
         try
         {
-            while (!_closing && _hp is null && !_paused && !_idle)
+            IsConnecting = true;
+            Status = T("status.connecting");
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            Headphones? hp = null;
+            if (DeviceMemory.Last is { } last)
             {
-                try
-                {
-                    // Last headphones first: discovery takes several seconds.
-                    Headphones? hp = null;
-                    if (DeviceMemory.Last is { } last)
-                    {
-                        Status = T("status.connecting");
-                        try { hp = await Headphones.ConnectAsync(last); } catch (Exception) { hp = null; }
-                    }
-                    // Listing every paired device is the costly part: only now and then once a device is known.
-                    bool discover = hp is null && (DeviceMemory.Last is null || attempt % 4 == 3);
-                    var found = discover ? await MdrConnection.FindPairedAsync() : [];
-                    if (hp is null && found.Count == 0) { Status = DeviceMemory.Last is null ? T("status.nopaired") : T("status.waiting"); }
-                    else
-                    {
-                        if (hp is null)
-                        {
-                            Status = T("status.connectingto", found[0].Name);
-                            hp = await Headphones.ConnectAsync(found[0].Address);
-                        }
-                        hp.StateChanged += () => _ui.BeginInvoke(Sync);
-                        hp.Disconnected += _ => _ui.BeginInvoke(OnDisconnected);
-                        _hp = hp;
-                        IsConnected = true;
-                        Touch();
-                        Status = T("status.connected");
-                        _ui.Invoke(Sync);
-                        _ui.Invoke(() => Connected?.Invoke());
-                        return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Status = T("status.retry", ex.Message.Split('\n')[0].Trim());
-                }
-                // Off or out of range: Windows tells us when they connect. Otherwise retry less and less often
-                // (5, 10, 20, 40 s, then every minute), e.g. while the phone app holds the control channel.
-                var backoff = TimeSpan.FromSeconds(Math.Min(60, 5 << Math.Min(attempt++, 4)));
-                if (DeviceMemory.Last is { } address) await MdrConnection.WaitForDeviceAsync(address, backoff);
-                else await Task.Delay(backoff);
+                try { hp = await Headphones.ConnectAsync(last, ReadGroup.All, timeout.Token); } catch (Exception) { hp = null; }
             }
+            if (hp is null && (discover || DeviceMemory.Last is null))
+            {
+                var found = await MdrConnection.FindPairedAsync();
+                if (found.Count == 0 && DeviceMemory.Last is null) { Status = T("status.nopaired"); return; }
+                foreach (var device in found.Where(d => d.Address != DeviceMemory.Last))
+                {
+                    try { hp = await Headphones.ConnectAsync(device.Address, ReadGroup.All, timeout.Token); break; }
+                    catch (Exception) { hp = null; }
+                }
+            }
+            if (hp is null) { Status = T("status.disconnected"); return; }
+
+            hp.StateChanged += () => _ui.BeginInvoke(Sync);
+            hp.Disconnected += _ => _ui.BeginInvoke(OnDisconnected);
+            _hp = hp;
+            IsConnected = true;
+            Touch();
+            Status = T("status.connected");
+            _ui.Invoke(Sync);
+            _ui.Invoke(() => Connected?.Invoke());
         }
-        finally { Interlocked.Exchange(ref _connecting, 0); }
+        finally
+        {
+            IsConnecting = false;
+            Interlocked.Exchange(ref _connecting, 0);
+            await WatchHeadphonesAsync();
+        }
+    }
+
+    private IDisposable? _watch;
+    private ulong _watched;
+
+    private async Task WatchHeadphonesAsync()
+    {
+        if (_closing || DeviceMemory.Last is not { } address || address == _watched) return;
+        _watch?.Dispose();
+        _watched = address;
+        _watch = await MdrConnection.WatchDeviceAsync(address, connected => _ui.BeginInvoke(() => OnDeviceStatus(connected)));
+    }
+
+    /// <summary>Windows reports the headphones arriving or leaving; the control link follows.</summary>
+    private async void OnDeviceStatus(bool connected)
+    {
+        if (_closing || _paused || _hp is not null) return;
+        if (!connected)
+        {
+            IsIdle = false;
+            Status = T("status.disconnected");
+            return;
+        }
+        IsIdle = false;
+        // Windows finishes connecting the audio profiles first; the control channel can take a few seconds to open.
+        for (int i = 0; i < 3 && _hp is null && !_paused && !_idle; i++)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(i == 0 ? 1.5 : 3));
+            if (DeviceMemory.Last is not { } address || !await MdrConnection.IsDeviceConnectedAsync(address)) break;
+            await ConnectAsync();
+        }
     }
 
     /// <summary>Shows a recorded session: the pages display that model's settings, changes are refused.</summary>
@@ -261,16 +313,22 @@ public sealed class MainViewModel : ObservableObject
         var hp = _hp;
         _hp = null;
         IsConnected = false;
-        Status = T("status.lost");
+        Status = T("status.disconnected");
         if (hp != null) await hp.DisposeAsync();
-        await Task.Delay(1500);
-        await ConnectLoopAsync();
+        // Some changes (connection priority) only drop the control link: come back while Bluetooth is still up.
+        for (int i = 0; i < 3 && _hp is null && !_paused && !_idle; i++)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            if (DeviceMemory.Last is not { } address || !await MdrConnection.IsDeviceConnectedAsync(address)) return;
+            await ConnectAsync();
+        }
     }
 
     public async Task ShutdownAsync()
     {
         _closing = true;
         Hotkeys.Dispose();
+        _watch?.Dispose();
         if (_hp != null) await _hp.DisposeAsync();
     }
 
@@ -391,6 +449,7 @@ public sealed class MainViewModel : ObservableObject
             Volume = s.MusicVolume ?? 0;
 
             PairedDevices = s.PairedDevices?.Select(d => new PairedDeviceRow(this, d.Name, d.Address, d.Connected, d.Playing)).ToList() ?? [];
+            PlaybackPinned = s.PlaybackPinned ?? false;
         }
         finally { _loading = false; }
         DeviceStateChanged?.Invoke();
@@ -495,16 +554,16 @@ public sealed class MainViewModel : ObservableObject
     private async void OnHotkey(string action)
     {
         // Released while idle: take the headphones back first (about a second).
-        if (!IsConnected && !await EnsureConnectedAsync(TimeSpan.FromSeconds(10))) { Status = T("status.hotkeyignored"); return; }
+        if (!IsConnected && !await EnsureConnectedAsync()) { Status = T("status.hotkeyignored"); return; }
         NcMode = action switch { "nc" => 0, "ambient" => 1, "off" => 2, _ => (NcMode + 1) % 3 };
     }
 
-    /// <summary>Tray shortcut: cycles noise cancelling → ambient → off.</summary>
-    public async void CycleNoiseMode()
-    {
-        if (!IsConnected && !await EnsureConnectedAsync(TimeSpan.FromSeconds(10))) return;
-        NcMode = (NcMode + 1) % 3;
-    }
+    /// <summary>What the notification area icon shows; while idle, the last mode known.</summary>
+    public TrayState TrayState =>
+        _hp is null && !_idle ? TrayState.Disconnected
+        : _ncMode == 0 ? TrayState.NoiseCancelling : _ncMode == 1 ? TrayState.Ambient : TrayState.Off;
+
+    public string ModeLabel => _ncMode switch { 0 => T("nc.nc"), 1 => T("nc.ambient"), _ => T("nc.off") };
 
     // ------------------------------------------------------------ sharing the headphones with the phone
 
@@ -513,15 +572,21 @@ public sealed class MainViewModel : ObservableObject
     private DateTime _lastActivity = DateTime.UtcNow;
 
     /// <summary>The user let the phone take over; Resonance stays away until <see cref="ResumeAsync"/>.</summary>
-    public bool IsPaused { get => _paused; private set { if (SetField(ref _paused, value)) Raise(nameof(IsReleased)); } }
+    public bool IsPaused { get => _paused; private set { if (SetField(ref _paused, value)) { Raise(nameof(IsReleased)); Raise(nameof(CanReconnect)); } } }
     /// <summary>Released after a while without use; any use connects again.</summary>
-    public bool IsIdle { get => _idle; private set { if (SetField(ref _idle, value)) Raise(nameof(IsReleased)); } }
+    public bool IsIdle { get => _idle; private set { if (SetField(ref _idle, value)) { Raise(nameof(IsReleased)); Raise(nameof(CanReconnect)); } } }
     public bool IsReleased => _paused || _idle;
 
     public bool ReleaseWhenIdle
     {
         get => _settings.ReleaseWhenIdle;
         set { if (_settings.ReleaseWhenIdle == value) return; _settings.ReleaseWhenIdle = value; _settings.Save(); Raise(); Touch(); }
+    }
+
+    /// <summary>Opening the quick panel or the window counts as use: take the headphones back if idle.</summary>
+    public void WakeIfIdle()
+    {
+        if (_idle) _ = EnsureConnectedAsync(); else Touch();
     }
 
     public static IReadOnlyList<Option<int>> IdleDelays { get; } =
@@ -553,14 +618,14 @@ public sealed class MainViewModel : ObservableObject
         IsPaused = false;
         IsIdle = false;
         Touch();
-        await ConnectLoopAsync();
+        await ConnectAsync();
     }
 
     /// <summary>
-    /// Connects again if Resonance released the headphones while idle. False when the user paused it, or when
-    /// the headphones could not be reached in time (the phone may hold them).
+    /// Connects for something the user just did. False when the user paused Resonance, or when the headphones
+    /// could not be reached (off, out of range, or the phone holds them).
     /// </summary>
-    public async Task<bool> EnsureConnectedAsync(TimeSpan timeout)
+    public async Task<bool> EnsureConnectedAsync()
     {
         Touch();
         if (_hp is not null) return true;
@@ -570,9 +635,7 @@ public sealed class MainViewModel : ObservableObject
             _quietConnect = true;
             IsIdle = false;
         }
-        _ = _ui.InvokeAsync(ConnectLoopAsync);
-        var deadline = DateTime.UtcNow + timeout;
-        while (_hp is null && DateTime.UtcNow < deadline) await Task.Delay(100);
+        await ConnectAsync();
         return _hp is not null;
     }
 
@@ -722,6 +785,7 @@ public sealed class MainViewModel : ObservableObject
             ["FitTest"] = s is { IsV1: false } && Declared(F1.WearingStatusDetector),
             ["PowerOff"] = s is { IsV1: true } ? s.Functions.Has(V1.FnPowerOff) : Declared(F1.PowerOff),
             ["Devices"] = s?.PairedDevices is not null,
+            ["PlaybackPin"] = s?.PlaybackPinned is not null,
             ["SingleBattery"] = s?.Battery is not null && s.BatteryLeft is null,
             ["EarbudBatteries"] = s?.BatteryLeft is not null,
             ["CaseBattery"] = s?.BatteryCase is not null,
@@ -952,6 +1016,13 @@ public sealed class MainViewModel : ObservableObject
     });
 
     // ------------------------------------------------------------ devices
+
+    private bool _playbackPinned;
+    public bool PlaybackPinned
+    {
+        get => _playbackPinned;
+        set { if (SetField(ref _playbackPinned, value)) _ = Send(hp => hp.SetPlaybackPinnedAsync(value)); }
+    }
 
     private DeviceActionResult? _lastAction;
     private IReadOnlyList<PairedDeviceRow> _pairedDevices = [];

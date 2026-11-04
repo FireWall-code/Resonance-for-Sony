@@ -13,7 +13,7 @@ public partial class App : Application
     private Forms.NotifyIcon? _tray;
     private MainWindow? _window;
     private MainViewModel? _vm;
-    private Forms.ToolStripMenuItem? _ncItem, _ambientItem, _offItem, _shareItem;
+    private Forms.ToolStripMenuItem? _ncItem, _ambientItem, _offItem, _shareItem, _reconnectItem;
 
     private readonly CancellationTokenSource _pipeCts = new();
 
@@ -36,17 +36,18 @@ public partial class App : Application
         _vm.Connected += ScheduleTrim;
         _vm.PropertyChanged += (_, a) =>
         {
-            if (a.PropertyName is nameof(MainViewModel.Status) or nameof(MainViewModel.IsConnected) or nameof(MainViewModel.IsPaused))
+            if (a.PropertyName is nameof(MainViewModel.Status) or nameof(MainViewModel.IsConnected) or nameof(MainViewModel.IsPaused)
+                or nameof(MainViewModel.IsIdle) or nameof(MainViewModel.NcMode) or nameof(MainViewModel.IsConnecting))
                 UpdateTray();
         };
-        _window.Activated += (_, _) => { if (_vm.IsIdle) _ = _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(10)); else _vm.Touch(); };
+        _window.Activated += (_, _) => _vm.WakeIfIdle();
 
         // "--background" starts hidden in the tray (for the Windows startup entry).
         if (!e.Args.Contains("--background")) _window.Show();
         // "--replay <folder>" shows a recorded session instead of connecting (other models, bug reports).
         int replay = Array.IndexOf(e.Args, "--replay");
         if (replay >= 0 && replay + 1 < e.Args.Length) { _vm.ShowRecording(e.Args[replay + 1]); return; }
-        await _vm.ConnectLoopAsync();
+        await _vm.ConnectAsync();
     }
 
     /// <summary>Runs a command received from resonance-cli on the app's connection.</summary>
@@ -54,6 +55,21 @@ public partial class App : Application
     {
         if (args.FirstOrDefault() == "__show") { await Dispatcher.InvokeAsync(ShowWindow); return CommandResult.Done("ok"); }
         if (args.FirstOrDefault() == "__ping") return CommandResult.Done("pong");
+        // Writes the notification area icons as images: resonance-cli __icons <folder>
+        if (args.FirstOrDefault() == "__icons")
+        {
+            var folder = args.ElementAtOrDefault(1) ?? ".";
+            foreach (var state in Enum.GetValues<TrayState>())
+                foreach (var dark in new[] { false, true })
+                    foreach (var size in new[] { 16, 20, 24, 32 })
+                    {
+                        using var bmp = TrayIcons.Draw(state, !dark, size);
+                        bmp.Save(System.IO.Path.Combine(folder, $"{state}-{(dark ? "dark" : "light")}-{size}.png"));
+                    }
+            return CommandResult.Done(folder);
+        }
+        // Toggles the quick panel, as a click on the icon does.
+        if (args.FirstOrDefault() == "__panel") { await Dispatcher.InvokeAsync(ToggleQuickPanel); return CommandResult.Done("ok"); }
         // Shows the connection card now (resonance-cli __card), as the Preview button does.
         if (args.FirstOrDefault() == "__card") { await Dispatcher.InvokeAsync(() => ShowConnectionCard(force: true)); return CommandResult.Done("ok"); }
         // Documentation screenshots, rendered off-screen: resonance-cli __screenshot <folder> [light|dark]
@@ -68,13 +84,13 @@ public partial class App : Application
                 return CommandResult.Done(T("status.paused"));
             case "resume" or "reprendre":
                 await Dispatcher.InvokeAsync(() => { _ = _vm.ResumeAsync(); });
-                return await _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(12))
-                    ? CommandResult.Done(T("status.connected")) : CommandResult.Waiting(T("cli.notconnected", _vm.Status));
+                return await _vm.EnsureConnectedAsync()
+                    ? CommandResult.Done(T("status.connected")) : CommandResult.Fail(T("cli.notconnected", _vm.Status));
         }
         if (_vm.IsPaused) return CommandResult.Fail(T("cli.paused"));
         // Released while idle: take the headphones back for this command.
-        if (_vm.Device is null && !await _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(12)))
-            return CommandResult.Waiting(T("cli.notconnected", _vm.Status));
+        if (_vm.Device is null && !await _vm.EnsureConnectedAsync())
+            return CommandResult.Fail(T("cli.notconnected", _vm.Status));
         _vm.Touch();
         return await CommandRunner.RunAsync(_vm.Device!, args);
     }
@@ -94,28 +110,25 @@ public partial class App : Application
             if (_vm!.IsPaused) await _vm.ResumeAsync(); else await _vm.PauseAsync();
         });
         menu.Items.Add(_shareItem);
+        _reconnectItem = new(T("action.reconnect"), null, async (_, _) => await _vm!.ConnectAsync(discover: true));
+        menu.Items.Add(_reconnectItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(T("tray.quit"), null, async (_, _) => await QuitAsync());
 
         _tray = new Forms.NotifyIcon
         {
-            Icon = CreateIcon(),
+            Icon = TrayIcons.Get(TrayState.Disconnected),
             Text = "Resonance",
             Visible = true,
             ContextMenuStrip = menu,
         };
-        _tray.MouseClick += (_, a) =>
-        {
-            // Left click toggles noise mode, like the touch sensor; double click opens the window.
-            if (a.Button == Forms.MouseButtons.Left && _vm!.IsConnected) _vm.CycleNoiseMode();
-        };
-        _tray.MouseDoubleClick += (_, _) => ShowWindow();
+        _tray.MouseClick += (_, a) => { if (a.Button == Forms.MouseButtons.Left) ToggleQuickPanel(); };
     }
 
     private void UpdateTray()
     {
         if (_tray is null || _vm is null) return;
-        var text = _vm.IsConnected ? $"{_vm.DeviceName}\n{_vm.BatterySummary}" : $"Resonance\n{_vm.Status}";
+        var text = _vm.IsConnected ? $"{_vm.DeviceName}\n{_vm.ModeLabel}\n{_vm.BatterySummary}" : $"Resonance\n{_vm.Status}";
         _tray.Text = text.Length > 127 ? text[..127] : text;
         _ncItem!.Checked = _vm.NcMode == 0;
         _ambientItem!.Checked = _vm.NcMode == 1;
@@ -123,6 +136,8 @@ public partial class App : Application
         // Released while idle, the noise items still work: they take the headphones back.
         foreach (var item in new[] { _ncItem, _ambientItem, _offItem }) item.Enabled = _vm.IsConnected || _vm.IsIdle;
         _shareItem!.Text = _vm.IsPaused ? T("share.resume") : T("share.pause");
+        _reconnectItem!.Visible = _vm.CanReconnect;
+        _tray.Icon = TrayIcons.Get(_vm.TrayState);
     }
 
     private DateTime _lastCard = DateTime.MinValue;
@@ -134,7 +149,7 @@ public partial class App : Application
     /// </summary>
     private void ShowConnectionCard(bool force)
     {
-        if (_vm is null || (!force && DateTime.UtcNow - _lastCard < TimeSpan.FromMinutes(2))) return;
+        if (_vm is null || (!force && (_panel is not null || DateTime.UtcNow - _lastCard < TimeSpan.FromMinutes(2)))) return;
         _lastCard = DateTime.UtcNow;
         _card?.Close();
         _card = _vm.CreateCard(ShowWindow);
@@ -144,7 +159,7 @@ public partial class App : Application
 
     private async Task SetModeAsync(int mode)
     {
-        if (_vm is null || (!_vm.IsConnected && !await _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(10)))) return;
+        if (_vm is null || (!_vm.IsConnected && !await _vm.EnsureConnectedAsync())) return;
         _vm.NcMode = mode;
     }
 
@@ -169,17 +184,33 @@ public partial class App : Application
     private void OnTrim(object? sender, EventArgs e)
     {
         _trim!.Stop();
-        if (_window is { IsVisible: true } || _card is not null) return;
+        if (_window is { IsVisible: true } || _card is not null || _panel is not null) return;
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
         GC.WaitForPendingFinalizers();
         using var self = System.Diagnostics.Process.GetCurrentProcess();
         EmptyWorkingSet(self.Handle);
     }
 
+    private QuickPanel? _panel;
+    private DateTime _panelClosed;
+
+    /// <summary>Opens the quick panel, or closes it: clicking the icon first takes the focus away and closes it.</summary>
+    private void ToggleQuickPanel()
+    {
+        if (_vm is null) return;
+        if (_panel is not null) { _panel.Close(); return; }
+        if (DateTime.UtcNow - _panelClosed < TimeSpan.FromMilliseconds(300)) return;
+        _vm.WakeIfIdle();
+        _panel = new QuickPanel(_vm, ShowWindow);
+        _panel.Closed += (_, _) => { _panel = null; _panelClosed = DateTime.UtcNow; ScheduleTrim(); };
+        _panel.Show();
+        _panel.Activate();
+    }
+
     public void ShowWindow()
     {
         // Opening the window means Resonance is in use: take the headphones back if it released them.
-        if (_vm is { IsIdle: true }) _ = _vm.EnsureConnectedAsync(TimeSpan.FromSeconds(10));
+        _vm?.WakeIfIdle();
         _window!.Show();
         if (_window.WindowState == WindowState.Minimized) _window.WindowState = WindowState.Normal;
         _window.Activate();
@@ -193,24 +224,4 @@ public partial class App : Application
         Shutdown();
     }
 
-    /// <summary>Uses the executable's icon; falls back to a drawn glyph.</summary>
-    private static Icon CreateIcon()
-    {
-        if (Environment.ProcessPath is { } exe && Icon.ExtractAssociatedIcon(exe) is { } own) return own;
-        using var bmp = new Bitmap(32, 32);
-        using (var g = Graphics.FromImage(bmp))
-        {
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-            using var font = new Font("Segoe Fluent Icons", 20, GraphicsUnit.Pixel);
-            using var fallback = new Font("Segoe MDL2 Assets", 20, GraphicsUnit.Pixel);
-            var f = font.Name == "Segoe Fluent Icons" ? font : fallback;
-            // U+E7F6 = "Headphone" in Segoe Fluent Icons / MDL2 Assets.
-            var color = Forms.SystemInformation.HighContrast ? Color.Black : Color.White;
-            using var brush = new SolidBrush(color);
-            g.DrawString("", f, brush, new RectangleF(0, 0, 32, 32),
-                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-        }
-        return Icon.FromHandle(bmp.GetHicon());
-    }
 }

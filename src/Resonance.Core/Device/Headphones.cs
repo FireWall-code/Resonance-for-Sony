@@ -84,7 +84,8 @@ public sealed partial class Headphones : IAsyncDisposable
     {
         var hp = new Headphones(await MdrConnection.ConnectAsync(address, ct));
         DeviceMemory.Remember(address);
-        await hp.EnsureAsync(read, ct);
+        try { await hp.EnsureAsync(read, ct); }
+        catch { await hp.DisposeAsync(); throw; }
         return hp;
     }
 
@@ -266,6 +267,7 @@ public sealed partial class Headphones : IAsyncDisposable
             yield return Q2(T2.VoiceGuidance | Op.GetParam, Inq.VoiceGuidanceVolume, set);
         if (f.Has2(F2.PairingWithClassOfDeviceBt) || f.Has2(F2.PairingWithClassOfDeviceLe))
             yield return Q2(T2.Peripheral | Op.GetParam, Inq.PairedDevices, ReadGroup.Devices);
+        if (f.Has2(F2.SourceSwitch)) yield return Q2(T2.Peripheral | Op.GetParam, Inq.SourceSwitch, ReadGroup.Devices);
         if (SoundPressureQuery() is { } sp) yield return sp;
     }
 
@@ -497,6 +499,8 @@ public sealed partial class Headphones : IAsyncDisposable
                     s.VoiceGuidance = OnOff.Is(p[2]); return true;
                 case (T2.VoiceGuidance, Op.RetParam, Inq.VoiceGuidanceVolume):
                     s.VoiceGuidanceVolume = (sbyte)p[2]; return true;
+                case (T2.Peripheral, Op.RetParam, Inq.SourceSwitch): // <00 pinned / 01 free> [result on NTFY]
+                    s.PlaybackPinned = OnOff.Is(p[2]); return true;
                 case (T2.Peripheral, Op.RetParam, Inq.PairedDevices or 0x00):
                     s.PairedDevices = ParsePairedDevices(p); return true;
                 case (T2.Peripheral, Op.RetExt, Inq.PairedDevices or 0x00) when p.Length >= 21:
@@ -834,6 +838,9 @@ public sealed partial class Headphones : IAsyncDisposable
     /// <summary>Makes <paramref name="address"/> the device whose audio is played.</summary>
     public Task SwitchAudioSourceAsync(string address) =>
         Set2([T2.Peripheral | Op.SetExt, Inq.SourceSwitch, .. Encoding.ASCII.GetBytes(address.ToUpperInvariant())]);
+
+    /// <summary>Keeps the sound on the device playing now: another connected device cannot take over.</summary>
+    public Task SetPlaybackPinnedAsync(bool pinned) => Set2(T2.Peripheral | Op.SetParam, Inq.SourceSwitch, OnOff.From(pinned));
 
     /// <summary>Puts the headphones in pairing mode to add a new device.</summary>
     public Task EnterPairingModeAsync() =>

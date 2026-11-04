@@ -1,5 +1,5 @@
 feature,area,priority,original,clone,notes
-Automatic connection to the paired headphones,connection,must,yes,yes,Uses Windows 11 association entries; remembers the last device
+Automatic connection to the paired headphones,connection,must,yes,yes,One attempt at start-up and when Windows reports the headphones; no background search; Reconnect button otherwise
 Automatic reconnection,connection,must,yes,yes,Every 5 s; needed after a connection priority change
 Other models (declared functions and variants),connection,must,yes,yes,"Checked with WF-1000XM5 and LinkBuds Clip recordings; WF-1000XM6 live"
 Over-ear single battery,status,must,yes,yes,From recordings only
@@ -45,6 +45,9 @@ Volume,playback,should,yes,yes,Tested
 Remembered devices,devices,could,yes,yes,Connected / playing state per device
 Connect / disconnect / forget a device,devices,could,yes,yes,Command verified (answer from the headphones); Forget not tested
 Switch audio source,devices,could,yes,yes,Implemented; not tested
+Pin playback to the current device,devices,should,yes,yes,Read and written on the WF-1000XM6
+Quick settings panel,window,should,no,yes,Opened from the notification area icon
+Notification area icon shows the noise mode,window,should,no,yes,Colour and shape per mode; crossed out when disconnected
 Pairing mode,devices,could,yes,yes,Implemented; not tested
 Sound level (safe listening),health,could,yes,yes,"Live level in dB, tested on WF-1000XM6"
 Safe listening weekly dose,health,could,yes,skip,"Logs decoded; the WHO dose formula was not recovered"

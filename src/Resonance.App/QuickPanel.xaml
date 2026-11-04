@@ -1,0 +1,74 @@
+<Window x:Class="Resonance.App.QuickPanel"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Resonance.App"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize"
+        Topmost="True" ShowInTaskbar="False" SizeToContent="WidthAndHeight" Title="Resonance">
+    <!-- Quick settings, opened by clicking the notification area icon; closes when it loses focus. -->
+    <Grid x:Name="Root" Margin="16" TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+        <Border CornerRadius="12" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="18,16">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.35" Direction="270" />
+            </Border.Effect>
+            <StackPanel Width="320">
+                <DockPanel>
+                    <local:DeviceArt DockPanel.Dock="Left" Width="74" Height="56" Margin="0,0,12,0"
+                                     Form="{Binding DeviceForm}" BodyColor="{Binding DeviceColor}" ImagePath="{Binding DevicePicture}" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DeviceName}" FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding BatterySummary}" Style="{StaticResource Caption}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Disconnected, connecting or paused -->
+                <Button Content="{local:L action.reconnect}" Command="{Binding ReconnectCommand}" HorizontalAlignment="Stretch" Margin="0,14,0,0"
+                        Visibility="{Binding CanReconnect, Converter={StaticResource BoolToVisibility}}" />
+                <Button Content="{local:L share.resume}" Command="{Binding ResumeCommand}" HorizontalAlignment="Stretch" Margin="0,14,0,0"
+                        Visibility="{Binding IsPaused, Converter={StaticResource BoolToVisibility}}" />
+
+                <!-- Connected -->
+                <StackPanel Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Visibility="{Binding Has[NoiseControl], Converter={StaticResource BoolToVisibility}}" Margin="0,14,0,0">
+                        <UniformGrid Rows="1">
+                            <RadioButton Content="{local:L quick.nc}" GroupName="quick" Margin="0,0,4,0" Style="{StaticResource {x:Type ToggleButton}}"
+                                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Visibility="{Binding Has[NoiseCancelling], Converter={StaticResource BoolToVisibility}}"
+                                         IsChecked="{Binding NcMode, Converter={x:Static local:IndexConverter.Instance}, ConverterParameter=0}" />
+                            <RadioButton Content="{local:L quick.ambient}" GroupName="quick" Margin="2,0" Style="{StaticResource {x:Type ToggleButton}}"
+                                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                         IsChecked="{Binding NcMode, Converter={x:Static local:IndexConverter.Instance}, ConverterParameter=1}" />
+                            <RadioButton Content="{local:L quick.off}" GroupName="quick" Margin="4,0,0,0" Style="{StaticResource {x:Type ToggleButton}}"
+                                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                         IsChecked="{Binding NcMode, Converter={x:Static local:IndexConverter.Instance}, ConverterParameter=2}" />
+                        </UniformGrid>
+                        <StackPanel Visibility="{Binding IsAmbient, Converter={StaticResource BoolToVisibility}}" Margin="0,12,0,0">
+                            <DockPanel>
+                                <TextBlock Text="{Binding AmbientLevel}" DockPanel.Dock="Right" Width="26" TextAlignment="Right" VerticalAlignment="Center" />
+                                <Slider Minimum="1" Maximum="20" Value="{Binding AmbientLevel}" IsSnapToTickEnabled="True" TickFrequency="1"
+                                        IsEnabled="{Binding IsManualAmbient}" ToolTip="{local:L nc.level}" />
+                            </DockPanel>
+                            <CheckBox Content="{local:L nc.voice}" IsChecked="{Binding VoiceFocus}" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <DockPanel Margin="0,12,0,0" Visibility="{Binding Has[Equalizer], Converter={StaticResource BoolToVisibility}}">
+                        <ComboBox DockPanel.Dock="Right" Width="190" ItemsSource="{Binding EqPresets}" SelectedItem="{Binding SelectedEqPreset}" />
+                        <TextBlock Text="{local:L eq.title}" VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <CheckBox Margin="0,12,0,0" IsChecked="{Binding PlaybackPinned}"
+                              Visibility="{Binding Has[PlaybackPin], Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{local:L pin.title}" TextWrapping="Wrap" />
+                            <TextBlock Text="{local:L pin.caption}" Style="{StaticResource Caption}" />
+                        </StackPanel>
+                    </CheckBox>
+                </StackPanel>
+
+                <Button Content="{local:L share.pause}" Command="{Binding PauseCommand}" HorizontalAlignment="Stretch" Margin="0,14,0,0"
+                        Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisibility}}" />
+                <Button Content="{local:L tray.open}" Click="OnOpen" HorizontalAlignment="Stretch" Margin="0,8,0,0" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

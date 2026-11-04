@@ -88,8 +88,9 @@ Resonance asks your headphones what they support and only shows those settings.
 There is nothing else to install. The app is not code-signed yet, so Windows SmartScreen may ask you to confirm
 the first launch (**More info → Run anyway**).
 
-Closing the window keeps Resonance in the notification area: click the icon to cycle noise modes, double-click
-to open it.
+Closing the window keeps Resonance in the notification area: click the icon for quick settings (mode, equalizer, pin playback), right-click
+for the menu. The icon shows the current mode: blue for noise cancelling, green for ambient sound, white for off, and
+crossed out when disconnected.
 
 ## Good to know 💡
 

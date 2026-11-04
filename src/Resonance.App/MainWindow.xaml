@@ -63,6 +63,8 @@
 
             <StackPanel DockPanel.Dock="Bottom">
                 <TextBlock Text="{Binding Status}" Style="{StaticResource Caption}" Margin="4,0,4,8" />
+                <Button Content="{local:L action.reconnect}" Command="{Binding ReconnectCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                        Visibility="{Binding CanReconnect, Converter={StaticResource BoolToVisibility}}" />
                 <Button Content="{local:L share.resume}" Command="{Binding ResumeCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,8"
                         Visibility="{Binding IsPaused, Converter={StaticResource BoolToVisibility}}" />
                 <Button Content="{local:L power.off}" Command="{Binding PowerOffCommand}" HorizontalAlignment="Stretch"
@@ -502,6 +504,13 @@
                                 <StackPanel>
                                     <TextBlock Text="{local:L devices.list}" Style="{StaticResource CardTitle}" />
                                     <TextBlock Text="{local:L devices.caption}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <DockPanel Style="{StaticResource Row}" Visibility="{Binding Has[PlaybackPin], Converter={StaticResource BoolToVisibility}}">
+                                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding PlaybackPinned}" VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{local:L pin.title}" />
+                                    <TextBlock Text="{local:L pin.caption}" Style="{StaticResource Caption}" />
                                 </StackPanel>
                             </DockPanel>
                             <ItemsControl ItemsSource="{Binding PairedDevices}" Margin="0,8,0,0">

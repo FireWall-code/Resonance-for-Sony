@@ -211,4 +211,6 @@ public sealed class HeadphoneState
     public NowPlaying? NowPlaying { get; internal set; }
 
     public IReadOnlyList<PairedDevice>? PairedDevices { get; internal set; }
+    /// <summary>Playback fixed on the current device (null: not supported).</summary>
+    public bool? PlaybackPinned { get; internal set; }
 }
