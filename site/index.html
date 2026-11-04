@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resonance: Sony Sound Connect alternative for Windows PC</title>
+<meta name="description" content="Sony Sound Connect on PC: Resonance is a free, independent Windows app for WH-1000XM and WF-1000XM headphones. Noise cancelling, EQ, battery. No emulator.">
+<link rel="canonical" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/">
+<link rel="alternate" hreflang="en" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/">
+<link rel="alternate" hreflang="fr" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/">
+<link rel="alternate" hreflang="x-default" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/">
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="style.css">
+<link rel="preload" as="image" href="images/hero.webp" fetchpriority="high">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resonance">
+<meta property="og:title" content="Resonance: control Sony headphones from Windows">
+<meta property="og:description" content="Sound Connect only runs on phones. Resonance brings noise cancelling, equalizer and battery to Windows. Free, independent, no emulator.">
+<meta property="og:url" content="https://firewall-code.github.io/Resonance-for-Sound-Connect/">
+<meta property="og:image" content="https://firewall-code.github.io/Resonance-for-Sound-Connect/images/social.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Resonance",
+  "alternateName": "Resonance for Sound Connect",
+  "description": "Free, independent Windows app to control Sony headphones: noise cancelling, ambient sound, equalizer, battery, touch controls, keyboard shortcuts and a command line. Not affiliated with Sony.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Windows 10, Windows 11",
+  "url": "https://firewall-code.github.io/Resonance-for-Sound-Connect/",
+  "downloadUrl": "https://github.com/FireWall-code/Resonance-for-Sound-Connect/releases/latest/download/Resonance-win-x64.zip",
+  "screenshot": "https://firewall-code.github.io/Resonance-for-Sound-Connect/images/hero.webp",
+  "license": "https://polyformproject.org/licenses/noncommercial/1.0.0/",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Is there a Sony Sound Connect app for PC?", "acceptedAnswer": { "@type": "Answer", "text": "Sony publishes Sound Connect, formerly Headphones Connect, for Android and iPhone only. Resonance is an independent Windows app that brings its main settings to your PC." } },
+    { "@type": "Question", "name": "Do I need BlueStacks or another Android emulator?", "acceptedAnswer": { "@type": "Answer", "text": "No. Resonance is a native Windows app that talks to the headphones over Bluetooth. You do not need an emulator, a phone or a Sony account." } },
+    { "@type": "Question", "name": "Which Sony headphones work with Resonance?", "acceptedAnswer": { "@type": "Answer", "text": "Every setting has been tested on the WF-1000XM6. The WF-1000XM5, LinkBuds Clip and WH-1000XM3 were checked against recorded sessions. The WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N and other LinkBuds use the same protocols and should work, but are not confirmed yet." } },
+    { "@type": "Question", "name": "Is Resonance free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, for personal and other noncommercial use, under the PolyForm Noncommercial License 1.0.0. The source code is public on GitHub. Commercial use needs the author's permission." } },
+    { "@type": "Question", "name": "Can I keep Sound Connect on my phone?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Headphones accept one control app at a time, so Resonance lets go of them after a few minutes without use and takes them back when you need it. You can also hand them to the phone right away." } },
+    { "@type": "Question", "name": "Can Resonance update the firmware?", "acceptedAnswer": { "@type": "Answer", "text": "No. Firmware files come from Sony's servers, so keep using the phone app for updates." } },
+    { "@type": "Question", "name": "Why does Windows show a SmartScreen warning?", "acceptedAnswer": { "@type": "Answer", "text": "The app is not code-signed yet. Choose More info, then Run anyway. The source code and the build workflow are public on GitHub." } }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="wrap">
+  <nav aria-label="Main">
+    <a class="brand" href="./"><img src="favicon.ico" width="28" height="28" alt="">Resonance</a>
+    <a class="hide" href="#features">Features</a>
+    <a class="hide" href="#headphones">Headphones</a>
+    <a class="hide" href="#faq">FAQ</a>
+    <a href="fr/" hreflang="fr" lang="fr">Français</a>
+    <a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <h1>Control Sony headphones from your Windows PC</h1>
+      <p>Sony's Sound Connect only runs on phones. Resonance, a free independent app, brings its main settings to Windows.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/releases/latest/download/Resonance-win-x64.zip">Download for Windows</a>
+        <a class="btn secondary" href="#faq">Read the FAQ</a>
+      </div>
+    </div>
+    <img src="images/hero.webp" width="1600" height="898" fetchpriority="high" alt="Resonance for Windows in light and dark themes, showing battery levels, noise cancelling and the connection card for Sony earbuds">
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <h2>The settings you open your phone for</h2>
+      <p>Resonance asks your headphones what they support and only shows those settings.</p>
+      <div class="bento">
+        <div class="cell wide">
+          <h3>Equalizer</h3>
+          <p>Presets and custom curves, with the bands your model offers.</p>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/equalizer-dark.webp">
+            <img src="images/equalizer-light.webp" width="1100" height="770" loading="lazy" alt="Resonance equalizer page with presets and frequency bands">
+          </picture>
+        </div>
+        <div class="cell side">
+          <h3>Battery and noise control</h3>
+          <p>Noise cancelling, ambient sound with level and voice focus, and the battery of each earbud and the case, from the taskbar.</p>
+          <img src="images/card.webp" width="561" height="467" loading="lazy" alt="Connection card showing the battery of the left earbud, right earbud and case">
+        </div>
+        <div class="cell third">
+          <h3>Keyboard shortcuts</h3>
+          <p>Switch noise modes with a global shortcut, in every app.</p>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/shortcuts-dark.webp">
+            <img src="images/shortcuts-light.webp" width="1100" height="770" loading="lazy" alt="Global keyboard shortcuts page for noise cancelling and ambient sound">
+          </picture>
+        </div>
+        <div class="cell third">
+          <h3>Touch controls</h3>
+          <p>Presets, gestures, quick access and head gestures.</p>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/touch-dark.webp">
+            <img src="images/touch-light.webp" width="1100" height="770" loading="lazy" alt="Touch controls page for customizing earbud gestures">
+          </picture>
+        </div>
+        <div class="cell third">
+          <h3>Multipoint devices</h3>
+          <p>Connect, disconnect and switch devices, or pin playback to the current one.</p>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/devices-dark.webp">
+            <img src="images/devices-light.webp" width="1100" height="770" loading="lazy" alt="Devices page listing the phone and laptop paired with the headphones">
+          </picture>
+        </div>
+      </div>
+      <div class="groups">
+        <div>
+          <h3>Sound</h3>
+          <ul>
+            <li>DSEE Extreme and connection priority</li>
+            <li>Background music and voice boost</li>
+            <li>Live sound level measured by the headphones</li>
+            <li>Speak-to-chat on models that offer it</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Windows</h3>
+          <ul>
+            <li>Quick settings from the notification area icon, which shows the current mode</li>
+            <li>Light and dark themes, in English and French</li>
+            <li>Starts with Windows and stays small when disconnected</li>
+            <li>Nothing to install, no account</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap split">
+      <div>
+        <h2>Scriptable from the command line</h2>
+        <p>Change modes, read the battery or switch devices from a terminal, a script or a Stream Deck button.</p>
+      </div>
+<pre><code><span class="c"># battery, mode, codec, now playing</span>
+resonance-cli status
+<span class="c"># ambient sound, level 12</span>
+resonance-cli ambient 12
+<span class="c"># equalizer preset</span>
+resonance-cli eq heavy
+<span class="c"># switch device</span>
+resonance-cli connect phone</code></pre>
+    </div>
+  </section>
+
+  <section id="headphones">
+    <div class="wrap">
+      <h2>Supported Sony headphones</h2>
+      <div class="models">
+        <div>
+          <h3>Fully tested</h3>
+          <p><strong>WF-1000XM6</strong></p>
+          <p>Every setting tested on the device.</p>
+        </div>
+        <div>
+          <h3>Checked</h3>
+          <p><strong>WF-1000XM5, LinkBuds Clip, WH-1000XM3</strong></p>
+          <p>Checked against recorded sessions. Changing settings is not yet confirmed by an owner.</p>
+        </div>
+        <div>
+          <h3>Should work</h3>
+          <p><strong>WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N, other LinkBuds</strong></p>
+          <p>Same protocols, not confirmed yet. <a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/blob/main/CONTRIBUTING.md#add-support-for-your-headphones">Help confirm yours</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <h2>Ready in a minute</h2>
+      <ol class="steps">
+        <li><b>Pair</b>Pair your headphones in Windows Bluetooth settings and connect them.</li>
+        <li><b>Unzip</b>Download the zip and unzip it anywhere. There is nothing to install.</li>
+        <li><b>Run</b>Open Resonance.exe. It finds your headphones by itself.</li>
+      </ol>
+      <p class="note">Requires Windows 10 (1809) or later. The app is not code-signed yet, so SmartScreen may ask you to confirm the first launch.</p>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2>Frequently asked questions</h2>
+      <div class="faq">
+        <details open><summary>Is there a Sony Sound Connect app for PC?</summary><p>Sony publishes Sound Connect, formerly Headphones Connect, for Android and iPhone only. Resonance is an independent Windows app that brings its main settings to your PC.</p></details>
+        <details><summary>Do I need BlueStacks or another Android emulator?</summary><p>No. Resonance is a native Windows app that talks to the headphones over Bluetooth. You do not need an emulator, a phone or a Sony account.</p></details>
+        <details><summary>Which Sony headphones work with Resonance?</summary><p>Every setting has been tested on the WF-1000XM6. The WF-1000XM5, LinkBuds Clip and WH-1000XM3 were checked against recorded sessions. The WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N and other LinkBuds use the same protocols and should work, but are not confirmed yet.</p></details>
+        <details><summary>Is Resonance free?</summary><p>Yes, for personal and other noncommercial use, under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The source code is public on GitHub. Commercial use needs the author's permission.</p></details>
+        <details><summary>Can I keep Sound Connect on my phone?</summary><p>Yes. Headphones accept one control app at a time, so Resonance lets go of them after a few minutes without use and takes them back when you need it. You can also hand them to the phone right away.</p></details>
+        <details><summary>Can Resonance update the firmware?</summary><p>No. Firmware files come from Sony's servers, so keep using the phone app for updates.</p></details>
+        <details><summary>Why does Windows show a SmartScreen warning?</summary><p>The app is not code-signed yet. Choose More info, then Run anyway. The source code and the build workflow are public on GitHub.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap end">
+    <h2>Leave your phone in your pocket</h2>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/releases/latest/download/Resonance-win-x64.zip">Download for Windows</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Resonance is an independent project. It is not affiliated with, endorsed by or sponsored by Sony. Sony, WF-1000XM6, LDAC, DSEE Extreme, Sound Connect and Headphones Connect are trademarks of Sony Group Corporation.</p>
+    <p><a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect">Source code</a>, <a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/blob/main/docs/PROTOCOL.md">protocol documentation</a> and <a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/issues">bug reports</a> on GitHub.</p>
+  </div>
+</footer>
+</body>
+</html>

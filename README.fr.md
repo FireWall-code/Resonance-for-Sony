@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><img alt="Dernière version" src="https://img.shields.io/github/v/release/FireWall-code/resonance-for-sony?color=7c3aed"></a>
+  <a href="../../releases/latest"><img alt="Dernière version" src="https://img.shields.io/github/v/release/FireWall-code/Resonance-for-Sound-Connect?color=7c3aed"></a>
   <img alt="Windows 10 et 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4">
   <img alt="Anglais et français" src="https://img.shields.io/badge/langues-EN%20%7C%20FR-06b6d4">
@@ -25,7 +25,7 @@ l'égaliseur, surveillez la batterie et personnalisez les commandes tactiles dep
 raccourci clavier ou la ligne de commande.
 
 Vous cherchez **Sony Sound Connect (anciennement Headphones Connect) sur PC** ? Sony ne le propose que sur
-téléphone. Resonance apporte ses réglages à Windows, sans émulateur.
+téléphone. Resonance apporte ses réglages à Windows, sans émulateur. [Voir le site](https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/).
 
 <p align="center">
   <a href="../../releases/latest"><img alt="Télécharger pour Windows" src="https://img.shields.io/badge/T%C3%A9l%C3%A9charger_pour_Windows-7c3aed?style=for-the-badge"></a>
@@ -40,10 +40,10 @@ téléphone. Resonance apporte ses réglages à Windows, sans émulateur.
 - 🔋 **Batterie en un coup d'œil** : chaque écouteur, le boîtier ou le casque, et une carte animée à la connexion
 - ⌨️ **Raccourcis clavier globaux** pour les modes de bruit, dans toutes les applis
 - 👆 **Commandes tactiles** : préréglages, gestes, accès rapide et gestes de la tête
-- 📱 **Appareils multipoint** : connecter, déconnecter et basculer entre vos appareils
+- 📱 **Appareils multipoint** : connecter, déconnecter et basculer entre vos appareils, ou épingler la lecture sur l'appareil actuel
 - ✨ **Audio** : DSEE Extreme, priorité de connexion, musique de fond, amplification de la voix
 - 📊 **Niveau sonore en direct**, mesuré par le casque
-- 🖥️ **Pensé pour Windows** : icône près de l'horloge, thèmes clair et sombre, démarrage avec Windows, ligne de commande
+- 🖥️ **Pensé pour Windows** : réglages rapides depuis l'icône près de l'horloge, qui indique le mode en cours, thèmes clair et sombre, démarrage avec Windows, ligne de commande
 
 ## En images 🖼️
 
@@ -168,6 +168,26 @@ La structure du code, la [spécification du protocole](docs/PROTOCOL.md) et le g
 
 </details>
 
+## Questions fréquentes ❓
+
+**Existe-t-il une appli Sony Sound Connect pour PC ?**
+Sony publie Sound Connect (anciennement Headphones Connect) uniquement pour Android et iPhone. Resonance est une appli
+Windows indépendante qui apporte ses principaux réglages sur votre PC.
+
+**Faut-il BlueStacks ou un autre émulateur Android ?**
+Non. Resonance est une appli Windows native qui parle au casque en Bluetooth. Il ne faut ni émulateur, ni téléphone,
+ni compte Sony.
+
+**Est-ce que ça marche avec les WH-1000XM5, WH-1000XM4 ou WF-1000XM5 ?**
+Les WF-1000XM6 sont testés à fond, les WF-1000XM5 ont été contrôlés sur des sessions enregistrées, et les WH-1000XM4
+et WH-1000XM5 utilisent les mêmes protocoles sans être encore confirmés. Voir [Casques pris en charge](#casques-pris-en-charge-).
+
+**Est-ce gratuit ?**
+Oui, pour un usage personnel et tout autre usage non commercial. Le code source est public ; voir [Licence](#licence-).
+
+**Peut-il mettre à jour le firmware ?**
+Non. Les fichiers de firmware viennent des serveurs de Sony : continuez à utiliser l'appli du téléphone pour les mises à jour.
+
 ## Contribuer 🤝
 
 Traductions, prise en charge d'autres modèles et signalements de bugs sont les bienvenus : voir
@@ -178,7 +198,7 @@ Les formats des autres modèles ont été vérifiés sur les sessions enregistr�
 
 ## Avertissement ⚠️
 
-Resonance est un projet indépendant, sans lien avec Sony. Sony, WF-1000XM6, LDAC, DSEE Extreme et Sound Connect sont
+Resonance est un projet indépendant, sans lien avec Sony. Sony, WF-1000XM6, LDAC, DSEE Extreme, Sound Connect et Headphones Connect sont
 des marques de Sony Group Corporation. Le protocole a été documenté à des fins d'interopérabilité ; aucun code ni
 élément graphique de Sony n'est inclus. Utilisation à vos risques.
 

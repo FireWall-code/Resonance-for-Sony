@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://firewall-code.github.io/Resonance-for-Sound-Connect/sitemap.xml

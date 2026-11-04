@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/FireWall-code/resonance-for-sony?color=7c3aed"></a>
+  <a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/FireWall-code/Resonance-for-Sound-Connect?color=7c3aed"></a>
   <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4">
   <img alt="English and French" src="https://img.shields.io/badge/languages-EN%20%7C%20FR-06b6d4">
@@ -24,7 +24,7 @@
 check the battery and remap the touch controls from a native Fluent app, a keyboard shortcut or the command line.
 
 Looking for **Sony Sound Connect (formerly Headphones Connect) on PC**? Sony only makes it for phones.
-Resonance brings its settings to Windows, with no emulator.
+Resonance brings its settings to Windows, with no emulator. [Visit the website](https://firewall-code.github.io/Resonance-for-Sound-Connect/).
 
 <p align="center">
   <a href="../../releases/latest"><img alt="Download for Windows" src="https://img.shields.io/badge/Download_for_Windows-7c3aed?style=for-the-badge"></a>
@@ -39,10 +39,10 @@ Resonance brings its settings to Windows, with no emulator.
 - 🔋 **Battery at a glance**: each earbud, the case or the headband, plus an animated card when they connect
 - ⌨️ **Global keyboard shortcuts** for noise modes, in every app
 - 👆 **Touch controls**: presets, gestures, quick access and head gestures
-- 📱 **Multipoint devices**: connect, disconnect and switch between your devices
+- 📱 **Multipoint devices**: connect, disconnect and switch between your devices, or pin playback to the current one
 - ✨ **Audio**: DSEE Extreme, connection priority, background music, voice boost
 - 📊 **Live sound level** measured by the headphones
-- 🖥️ **Made for Windows**: notification area icon, light and dark themes, start with Windows, command line
+- 🖥️ **Made for Windows**: quick settings from the notification area icon, which shows the current mode, light and dark themes, start with Windows, command line
 
 ## A closer look 🖼️
 
@@ -167,6 +167,26 @@ dotnet run --project src/Resonance.App        # run the app
 
 </details>
 
+## Frequently asked questions ❓
+
+**Is there a Sony Sound Connect app for PC?**
+Sony publishes Sound Connect (formerly Headphones Connect) for Android and iPhone only. Resonance is an independent
+Windows app that brings its main settings to your PC.
+
+**Do I need BlueStacks or another Android emulator?**
+No. Resonance is a native Windows app that talks to the headphones over Bluetooth. You need no emulator, phone or
+Sony account.
+
+**Does it work with the WH-1000XM5, WH-1000XM4 or WF-1000XM5?**
+The WF-1000XM6 is fully tested, the WF-1000XM5 was checked against recorded sessions, and the WH-1000XM4 and
+WH-1000XM5 use the same protocols but are not confirmed yet. See [Supported headphones](#supported-headphones-).
+
+**Is it free?**
+Yes, for personal and other noncommercial use. The source code is public; see [License](#license-).
+
+**Can it update the firmware?**
+No. Firmware files come from Sony's servers, so keep using the phone app for updates.
+
 ## Contributing 🤝
 
 Translations, support for more models and bug reports are very welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -177,7 +197,7 @@ The layouts of other models were cross-checked against the recorded sessions and
 ## Disclaimer ⚠️
 
 Resonance is an independent project. It is not affiliated with, endorsed by or sponsored by Sony.
-Sony, WF-1000XM6, LDAC, DSEE Extreme and Sound Connect are trademarks of Sony Group Corporation.
+Sony, WF-1000XM6, LDAC, DSEE Extreme, Sound Connect and Headphones Connect are trademarks of Sony Group Corporation.
 The protocol was documented for interoperability; no Sony code or assets are included. Use at your own risk.
 
 ## License 📜

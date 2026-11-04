@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resonance : l'alternative à Sony Sound Connect sur PC Windows</title>
+<meta name="description" content="Sony Sound Connect sur PC : Resonance, appli Windows gratuite et indépendante pour casques WH-1000XM et WF-1000XM. Réduction de bruit, égaliseur, batterie.">
+<link rel="canonical" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/">
+<link rel="alternate" hreflang="en" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/">
+<link rel="alternate" hreflang="fr" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/">
+<link rel="alternate" hreflang="x-default" href="https://firewall-code.github.io/Resonance-for-Sound-Connect/">
+<link rel="icon" href="../favicon.ico">
+<link rel="stylesheet" href="../style.css">
+<link rel="preload" as="image" href="../images/hero.webp" fetchpriority="high">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Resonance">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Resonance : réglez votre casque Sony depuis Windows">
+<meta property="og:description" content="Sound Connect ne tourne que sur téléphone. Resonance apporte la réduction de bruit, l'égaliseur et la batterie sur Windows. Gratuit, indépendant, sans émulateur.">
+<meta property="og:url" content="https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/">
+<meta property="og:image" content="https://firewall-code.github.io/Resonance-for-Sound-Connect/images/social.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Resonance",
+  "alternateName": "Resonance for Sound Connect",
+  "description": "Appli Windows gratuite et indépendante pour régler les casques Sony : réduction de bruit, son ambiant, égaliseur, batterie, commandes tactiles, raccourcis clavier et ligne de commande. Sans lien avec Sony.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Windows 10, Windows 11",
+  "inLanguage": "fr",
+  "url": "https://firewall-code.github.io/Resonance-for-Sound-Connect/fr/",
+  "downloadUrl": "https://github.com/FireWall-code/Resonance-for-Sound-Connect/releases/latest/download/Resonance-win-x64.zip",
+  "screenshot": "https://firewall-code.github.io/Resonance-for-Sound-Connect/images/hero.webp",
+  "license": "https://polyformproject.org/licenses/noncommercial/1.0.0/",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Existe-t-il une appli Sony Sound Connect pour PC ?", "acceptedAnswer": { "@type": "Answer", "text": "Sony publie Sound Connect, anciennement Headphones Connect, uniquement pour Android et iPhone. Resonance est une appli Windows indépendante qui apporte ses principaux réglages sur votre PC." } },
+    { "@type": "Question", "name": "Faut-il BlueStacks ou un autre émulateur Android ?", "acceptedAnswer": { "@type": "Answer", "text": "Non. Resonance est une appli Windows native qui parle au casque en Bluetooth. Il ne faut ni émulateur, ni téléphone, ni compte Sony." } },
+    { "@type": "Question", "name": "Quels casques et écouteurs Sony fonctionnent avec Resonance ?", "acceptedAnswer": { "@type": "Answer", "text": "Tous les réglages ont été testés sur les WF-1000XM6. Les WF-1000XM5, LinkBuds Clip et WH-1000XM3 ont été contrôlés sur des sessions enregistrées. Les WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N et autres LinkBuds utilisent les mêmes protocoles et devraient fonctionner, mais ce n'est pas encore confirmé." } },
+    { "@type": "Question", "name": "Resonance est-il gratuit ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, pour un usage personnel et tout autre usage non commercial, sous licence PolyForm Noncommercial 1.0.0. Le code source est public sur GitHub. Un usage commercial demande l'accord de l'auteur." } },
+    { "@type": "Question", "name": "Puis-je garder Sound Connect sur mon téléphone ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Un casque n'accepte qu'une appli de contrôle à la fois : Resonance le libère après quelques minutes sans utilisation et le reprend quand vous en avez besoin. Vous pouvez aussi le laisser au téléphone tout de suite." } },
+    { "@type": "Question", "name": "Resonance peut-il mettre à jour le firmware ?", "acceptedAnswer": { "@type": "Answer", "text": "Non. Les fichiers de firmware viennent des serveurs de Sony : continuez à utiliser l'appli du téléphone pour les mises à jour." } },
+    { "@type": "Question", "name": "Pourquoi Windows affiche-t-il un avertissement SmartScreen ?", "acceptedAnswer": { "@type": "Answer", "text": "L'appli n'est pas encore signée. Choisissez Informations complémentaires, puis Exécuter quand même. Le code source et le processus de construction sont publics sur GitHub." } }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="wrap">
+  <nav aria-label="Principale">
+    <a class="brand" href="./"><img src="../favicon.ico" width="28" height="28" alt="">Resonance</a>
+    <a class="hide" href="#fonctions">Fonctions</a>
+    <a class="hide" href="#casques">Casques</a>
+    <a class="hide" href="#faq">FAQ</a>
+    <a href="../" hreflang="en" lang="en">English</a>
+    <a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <h1>Réglez votre casque Sony depuis votre PC Windows</h1>
+      <p>Sound Connect de Sony ne tourne que sur téléphone. Resonance, appli gratuite et indépendante, apporte ses principaux réglages sur Windows.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/releases/latest/download/Resonance-win-x64.zip">Télécharger pour Windows</a>
+        <a class="btn secondary" href="#faq">Lire la FAQ</a>
+      </div>
+    </div>
+    <img src="../images/hero.webp" width="1600" height="898" fetchpriority="high" alt="Resonance pour Windows en thèmes clair et sombre, avec les batteries, la réduction de bruit et la carte de connexion d'écouteurs Sony">
+  </div>
+
+  <section id="fonctions">
+    <div class="wrap">
+      <h2>Les réglages pour lesquels vous sortiez votre téléphone</h2>
+      <p>Resonance demande à votre casque ce qu'il sait faire et n'affiche que ces réglages.</p>
+      <div class="bento">
+        <div class="cell wide">
+          <h3>Égaliseur</h3>
+          <p>Préréglages et courbes personnalisées, avec les bandes de votre modèle.</p>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="../images/equalizer-dark.webp">
+            <img src="../images/equalizer-light.webp" width="1100" height="770" loading="lazy" alt="Page égaliseur de Resonance avec préréglages et bandes de fréquences">
+          </picture>
+        </div>
+        <div class="cell side">
+          <h3>Batterie et contrôle du bruit</h3>
+          <p>Réduction de bruit, son ambiant avec niveau et accent sur les voix, et batterie de chaque écouteur et du boîtier, depuis la barre des tâches.</p>
+          <img src="../images/card.webp" width="561" height="467" loading="lazy" alt="Carte de connexion avec la batterie de l'écouteur gauche, de l'écouteur droit et du boîtier">
+        </div>
+        <div class="cell third">
+          <h3>Raccourcis clavier</h3>
+          <p>Changez de mode de bruit avec un raccourci global, dans toutes vos applis.</p>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="../images/shortcuts-dark.webp">
+            <img src="../images/shortcuts-light.webp" width="1100" height="770" loading="lazy" alt="Page des raccourcis clavier globaux pour la réduction de bruit et le son ambiant">
+          </picture>
+        </div>
+        <div class="cell third">
+          <h3>Commandes tactiles</h3>
+          <p>Préréglages, gestes, accès rapide et gestes de la tête.</p>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="../images/touch-dark.webp">
+            <img src="../images/touch-light.webp" width="1100" height="770" loading="lazy" alt="Page des commandes tactiles pour personnaliser les gestes des écouteurs">
+          </picture>
+        </div>
+        <div class="cell third">
+          <h3>Appareils multipoint</h3>
+          <p>Connectez, déconnectez et changez d'appareil, ou épinglez la lecture sur l'appareil actuel.</p>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="../images/devices-dark.webp">
+            <img src="../images/devices-light.webp" width="1100" height="770" loading="lazy" alt="Page des appareils listant le téléphone et le PC associés au casque">
+          </picture>
+        </div>
+      </div>
+      <div class="groups">
+        <div>
+          <h3>Son</h3>
+          <ul>
+            <li>DSEE Extreme et priorité de connexion</li>
+            <li>Musique de fond et amplification de la voix</li>
+            <li>Niveau sonore en direct, mesuré par le casque</li>
+            <li>Conversation automatique sur les modèles qui l'ont</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Windows</h3>
+          <ul>
+            <li>Réglages rapides depuis l'icône près de l'horloge, qui indique le mode en cours</li>
+            <li>Thèmes clair et sombre, en français et en anglais</li>
+            <li>Démarre avec Windows et reste léger une fois déconnecté</li>
+            <li>Rien à installer, aucun compte</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap split">
+      <div>
+        <h2>Pilotable en ligne de commande</h2>
+        <p>Changez de mode, lisez la batterie ou passez d'un appareil à l'autre depuis un terminal, un script ou un bouton de Stream Deck.</p>
+      </div>
+<pre><code><span class="c"># batterie, mode, codec, morceau en cours</span>
+resonance-cli etat
+<span class="c"># son ambiant, niveau 12</span>
+resonance-cli ambiant 12
+<span class="c"># préréglage de l'égaliseur</span>
+resonance-cli eq heavy
+<span class="c"># changer d'appareil</span>
+resonance-cli connecter telephone</code></pre>
+    </div>
+  </section>
+
+  <section id="casques">
+    <div class="wrap">
+      <h2>Casques et écouteurs Sony compatibles</h2>
+      <div class="models">
+        <div>
+          <h3>Testé à fond</h3>
+          <p><strong>WF-1000XM6</strong></p>
+          <p>Tous les réglages testés sur l'appareil.</p>
+        </div>
+        <div>
+          <h3>Contrôlés</h3>
+          <p><strong>WF-1000XM5, LinkBuds Clip, WH-1000XM3</strong></p>
+          <p>Contrôlés sur des sessions enregistrées. Le changement des réglages n'est pas encore confirmé par un propriétaire.</p>
+        </div>
+        <div>
+          <h3>Devraient fonctionner</h3>
+          <p><strong>WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N, autres LinkBuds</strong></p>
+          <p>Mêmes protocoles, pas encore confirmés. <a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/blob/main/CONTRIBUTING.md#add-support-for-your-headphones">Aidez à confirmer le vôtre</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="installation">
+    <div class="wrap">
+      <h2>Prêt en une minute</h2>
+      <ol class="steps">
+        <li><b>Associer</b>Associez votre casque dans les paramètres Bluetooth de Windows et connectez-le.</li>
+        <li><b>Décompresser</b>Téléchargez le zip et décompressez-le où vous voulez. Rien à installer.</li>
+        <li><b>Lancer</b>Ouvrez Resonance.exe. Il trouve votre casque tout seul.</li>
+      </ol>
+      <p class="note">Nécessite Windows 10 (1809) ou plus récent. L'appli n'est pas encore signée : SmartScreen peut demander confirmation au premier lancement.</p>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2>Questions fréquentes</h2>
+      <div class="faq">
+        <details open><summary>Existe-t-il une appli Sony Sound Connect pour PC ?</summary><p>Sony publie Sound Connect, anciennement Headphones Connect, uniquement pour Android et iPhone. Resonance est une appli Windows indépendante qui apporte ses principaux réglages sur votre PC.</p></details>
+        <details><summary>Faut-il BlueStacks ou un autre émulateur Android ?</summary><p>Non. Resonance est une appli Windows native qui parle au casque en Bluetooth. Il ne faut ni émulateur, ni téléphone, ni compte Sony.</p></details>
+        <details><summary>Quels casques et écouteurs Sony fonctionnent avec Resonance ?</summary><p>Tous les réglages ont été testés sur les WF-1000XM6. Les WF-1000XM5, LinkBuds Clip et WH-1000XM3 ont été contrôlés sur des sessions enregistrées. Les WH-1000XM4, WH-1000XM5, WH-1000XM6, WF-1000XM4, WF-C700N et autres LinkBuds utilisent les mêmes protocoles et devraient fonctionner, mais ce n'est pas encore confirmé.</p></details>
+        <details><summary>Resonance est-il gratuit ?</summary><p>Oui, pour un usage personnel et tout autre usage non commercial, sous <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">licence PolyForm Noncommercial 1.0.0</a>. Le code source est public sur GitHub. Un usage commercial demande l'accord de l'auteur.</p></details>
+        <details><summary>Puis-je garder Sound Connect sur mon téléphone ?</summary><p>Oui. Un casque n'accepte qu'une appli de contrôle à la fois : Resonance le libère après quelques minutes sans utilisation et le reprend quand vous en avez besoin. Vous pouvez aussi le laisser au téléphone tout de suite.</p></details>
+        <details><summary>Resonance peut-il mettre à jour le firmware ?</summary><p>Non. Les fichiers de firmware viennent des serveurs de Sony : continuez à utiliser l'appli du téléphone pour les mises à jour.</p></details>
+        <details><summary>Pourquoi Windows affiche-t-il un avertissement SmartScreen ?</summary><p>L'appli n'est pas encore signée. Choisissez Informations complémentaires, puis Exécuter quand même. Le code source et le processus de construction sont publics sur GitHub.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap end">
+    <h2>Laissez votre téléphone dans votre poche</h2>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/releases/latest/download/Resonance-win-x64.zip">Télécharger pour Windows</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Resonance est un projet indépendant, sans lien avec Sony, qui ne l'approuve ni ne le parraine. Sony, WF-1000XM6, LDAC, DSEE Extreme, Sound Connect et Headphones Connect sont des marques de Sony Group Corporation.</p>
+    <p><a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect">Code source</a>, <a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/blob/main/docs/PROTOCOL.md">documentation du protocole</a> et <a href="https://github.com/FireWall-code/Resonance-for-Sound-Connect/issues">signalement de bugs</a> sur GitHub.</p>
+  </div>
+</footer>
+</body>
+</html>
